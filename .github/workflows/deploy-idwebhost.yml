@@ -1,0 +1,69 @@
+name: Deploy Ma'had Ali to IDwebhost (FTP)
+
+# First deployment is manual. Enable push trigger only after verifying
+# the FTP directory and completing a successful test deployment.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mahad-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload application to IDwebhost
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate FTP configuration
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR }}
+        run: |
+          test -n "$FTP_SERVER" || { echo "::error::Set FTP_SERVER secret"; exit 1; }
+          test -n "$FTP_USERNAME" || { echo "::error::Set FTP_USERNAME secret"; exit 1; }
+          test -n "$FTP_PASSWORD" || { echo "::error::Set FTP_PASSWORD secret"; exit 1; }
+          test -n "$FTP_SERVER_DIR" || { echo "::error::Set FTP_SERVER_DIR variable"; exit 1; }
+          case "$FTP_SERVER_DIR" in
+            /*/) ;;
+            *) echo "::error::FTP_SERVER_DIR must start and end with /"; exit 1 ;;
+          esac
+          case "$FTP_SERVER_DIR" in
+            /|/public_html/|/www/)
+              echo "::error::Refusing broad deployment directory; use the exact subdomain document root"
+              exit 1 ;;
+          esac
+
+      - name: Deploy application using FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          server-dir: ${{ vars.FTP_SERVER_DIR }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/vendor/**
+            **/README.md
+            **/config.php
+            **/config.example.php
+            **/database/**
+            **/uploads/**
+            **/*.sql
+            **/*.log
