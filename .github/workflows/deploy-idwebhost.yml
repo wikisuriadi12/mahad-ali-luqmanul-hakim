@@ -33,14 +33,18 @@ jobs:
           test -n "$FTP_SERVER" || { echo "::error::Set FTP_SERVER secret"; exit 1; }
           test -n "$FTP_USERNAME" || { echo "::error::Set FTP_USERNAME secret"; exit 1; }
           test -n "$FTP_PASSWORD" || { echo "::error::Set FTP_PASSWORD secret"; exit 1; }
-          test -n "$FTP_SERVER_DIR" || { echo "::error::Set FTP_SERVER_DIR variable"; exit 1; }
+          test -n "$FTP_SERVER_DIR" || { echo "::error::FTP_SERVER_DIR belum diatur. Buka Settings > Secrets and variables > Actions > Variables."; exit 1; }
+          if [ "$FTP_USERNAME" = "mahad.ftp@mahad.ali.yayasanluqmanulhakimmarelan.com" ]; then
+            echo "::error::Akun FTP lama hanya mengakses subfolder mahad.ftp. Buat akun FTP deployment yang root-nya adalah Document Root subdomain, lalu ganti FTP_USERNAME dan FTP_PASSWORD secrets."
+            exit 1
+          fi
           case "$FTP_SERVER_DIR" in
             /*/) ;;
             *) echo "::error::FTP_SERVER_DIR must start and end with /"; exit 1 ;;
           esac
           case "$FTP_SERVER_DIR" in
             /|/public_html/|/www/)
-              echo "::error::Refusing broad deployment directory; use the exact subdomain document root"
+              echo "::error::Folder / belum diizinkan sebelum akun FTP khusus dibatasi ke Document Root subdomain. Hubungi pengelola hosting untuk memverifikasi root FTP."
               exit 1 ;;
           esac
 
@@ -61,6 +65,9 @@ jobs:
             **/node_modules/**
             **/vendor/**
             **/README.md
+            **/.htaccess
+            **/.user.ini
+            **/php.ini
             **/config.php
             **/config.example.php
             **/database/**
