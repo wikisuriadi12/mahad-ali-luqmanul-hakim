@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['.github/workflows/deploy-idwebhost.yml']
+    paths: ['.github/workflows/deploy-idwebhost.yml', 'index.php', 'src/**', 'views/**', 'assets/**', 'database/schema.sql', 'tests/**']
 
 permissions:
   contents: read
@@ -18,11 +18,38 @@ jobs:
     name: Upload application to IDwebhost
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: test-only-password
+          MARIADB_DATABASE: mahad_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
     steps:
       - name: Checkout deployment revision
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: Validate PHP and test isolated database flows
+        env:
+          APP_TEST: '1'
+        run: |
+          php -v
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+          php tests/fixtures.php
+          php -S 127.0.0.1:8080 > /tmp/mahad-php.log 2>&1 &
+          PHP_PID=$!
+          trap 'kill "$PHP_PID" 2>/dev/null || true; rm -f config.php' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/ > /dev/null; then break; fi
+            sleep 1
+          done
+          python3 tests/http.py
 
       # cPanel verified 2026-10-17:
       # account yayas183 -> /home/yayas183
@@ -102,3 +129,4 @@ jobs:
           finally:
               ftp.close()
           PY
+

@@ -36,3 +36,4 @@ CREATE TABLE IF NOT EXISTS transactions (
  CONSTRAINT fk_transactions_user FOREIGN KEY (created_by) REFERENCES users(id),
  INDEX idx_tanggal (tanggal)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

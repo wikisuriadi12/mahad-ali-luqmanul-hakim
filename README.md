@@ -1,21 +1,65 @@
 # SIM MA'HAD ALI LUQMANUL HAKIM
 
-Aplikasi administrasi internal berbasis PHP 8.2+ dan MySQL/MariaDB untuk hosting IDwebhost/cPanel.
+PHP 8.2+ / MySQL atau MariaDB, untuk IDwebhost/cPanel.
+Domain: https://mahad.aly.yayasanluqmanulhakimmarelan.com/
 
-## Modul tahap awal
-- Login administrator dan sesi aman
-- Dashboard ringkasan
-- Data Peserta (tambah dan daftar)
-- Inventaris Aset (tambah dan daftar)
-- Keuangan: pemasukan (infaq, usaha, iuran, donasi, lainnya) dan pengeluaran operasional (tambah dan daftar)
-- Saldo kas sederhana dari transaksi tercatat
+## Fungsi struktur awal yang dilengkapi
+- Login, logout, ganti password sendiri, dan tambah pengguna oleh admin.
+- Dashboard sesuai hak akses: peserta, aset, pemasukan, pengeluaran, saldo.
+- Peserta: tambah, edit, status aktif/nonaktif/lulus, cari, halaman daftar.
+- Aset: tambah, edit, kondisi, lokasi, nilai perolehan, cari, halaman daftar.
+- Keuangan: transaksi pemasukan/pengeluaran, validasi kategori dan tanggal.
+- Laporan: rentang tanggal, saldo awal/akhir, CSV seluruh periode, cetak halaman.
+- Tampilan responsif, CSRF, prepared statements, escaping HTML, cookie HttpOnly/SameSite,
+  pembatasan percobaan login per sesi (bukan pengganti rate limiting server).
+- Tidak ada fungsi hapus. Tidak ada akun atau password bawaan yang aktif.
 
-## Instalasi di IDwebhost
-1. Buat database dan user MySQL melalui cPanel; berikan hak akses hanya ke database aplikasi.
-2. Impor `database/schema.sql` lewat phpMyAdmin.
-3. Unggah isi repository ke document root subdomain.
-4. Salin `config.example.php` menjadi `config.php`, lalu isi kredensial database. Jangan commit `config.php`.
-5. Buat akun admin pertama lewat SQL dengan hash dari `password_hash('password-kuat', PASSWORD_DEFAULT)` yang dibuat secara lokal. Contoh: `INSERT INTO users (username,password_hash,role) VALUES ('admin','HASH_HASIL_PASSWORD_HASH','admin');`
-6. Akses HTTPS subdomain; login dan segera gunakan password yang kuat.
+## Hak akses
+| Peran | Akses |
+|---|---|
+| admin | Semua modul, tambah pengguna |
+| peserta | Petugas data peserta: tambah/edit/daftar |
+| aset | Petugas inventaris: tambah/edit/daftar |
+| bendahara | Input keuangan dan laporan |
+| pimpinan | Baca peserta, aset, keuangan, laporan |
+Semua peran dapat mengganti password sendiri. Perubahan password membatalkan sesi lain.
 
-**Penting:** ini versi awal/MVP untuk pengujian, bukan sistem produksi final. Sebelum menyimpan data peserta sungguhan perlu pengujian keamanan, backup, kebijakan privasi, dan penambahan edit/hapus, approval, serta laporan. Jangan unggah dokumen sensitif atau kredensial ke GitHub.
+## Pemasangan database di cPanel
+1. Pilih database aplikasi `yayas183_mahad_ali` di **Manage My Databases**. Buat hanya bila belum ada.
+2. Hubungkan user MySQL aplikasi (sebelumnya `yayas183_mahaduser`) ke database itu saja.
+   Untuk runtime aplikasi cukup SELECT, INSERT, UPDATE. Impor tabel dilakukan sebagai pemilik melalui phpMyAdmin.
+3. Di phpMyAdmin pilih database aplikasi, lalu impor `database/schema.sql`.
+   Berisi empat CREATE TABLE IF NOT EXISTS; tidak ada DROP, TRUNCATE, DELETE, atau data contoh.
+4. Di document root `/home/yayas183/mahad.aly.yayasanluqmanulhakimmarelan.com`,
+   salin `config.example.php` menjadi `config.php` dan isi host localhost, nama database,
+   username MySQL lengkap, serta password MySQL yang dimasukkan sendiri. Jangan commit config.php.
+5. Buat admin pertama lewat CLI interaktif `php tools/install.php` dari folder proyek lengkap.
+   Script hanya berjalan di CLI, meminta konfirmasi database, membuat tabel yang belum ada,
+   lalu meminta username/password tersembunyi. Bila sudah ada pengguna, tidak membuat akun tambahan.
+   Bila menggunakan installer untuk membuat tabel, user MySQL memerlukan CREATE/REFERENCES saat pemasangan;
+   setelahnya batasi kembali ke SELECT/INSERT/UPDATE.
+   Folder tools dan database perlu diunggah manual; workflow tidak mengunggahnya.
+6. Alternatif phpMyAdmin: buat hash dengan PHP `password_hash` secara lokal lalu INSERT akun
+   ke users (username, password_hash, role). Jangan menyimpan password polos/MD5.
+7. Login HTTPS dan periksa Dashboard, Peserta, Aset, Keuangan, Laporan, Akun.
+   Akun sementara tidak kedaluwarsa otomatis; gunakan menu Akun untuk mengganti password.
+
+## Deployment
+Workflow menguji PHP dan alur HTTP menggunakan database MariaDB sementara di GitHub Actions,
+kemudian mengunggah index.php, src/*.php, views/*.php, dan assets/*.css melalui FTPS TLS terverifikasi.
+FTP_SERVER_DIR: `mahad.aly.yayasanluqmanulhakimmarelan.com/` untuk akun FTP utama `yayas183`.
+Server TLS: `sorosutan.idweb.host:21`. Tidak ada penghapusan remote atau migrasi otomatis.
+config.php, SQL, tools, tests, dan .htaccess tidak diunggah otomatis. .htaccess dapat dipasang manual
+setelah memeriksa aturan hosting yang sudah ada. Database hosting tidak dibuat oleh deployment.
+
+## Pengujian
+CI menggunakan database `mahad_test` terpisah. Fixture hanya boleh dijalankan dengan APP_TEST=1
+pada lingkungan uji. Jangan menjalankannya di hosting produksi.
+Cakupan: login, CSRF, escaping XSS, edit peserta, tambah aset, kategori/tanggal/nominal,
+laporan saldo, CSV, batas hak akses, ganti password dan pembatalan sesi lama.
+
+## Batas operasional
+Laporan menghitung saldo transaksi tercatat, belum rekonsiliasi kas/bank atau akuntansi berpasangan.
+Transaksi belum memiliki approval dan koreksi berjejak; tidak disediakan edit/hapus transaksi.
+CSV memuat seluruh periode; cetak memuat 50 transaksi per halaman yang dipilih.
+Backup dan pembatasan login lintas sesi perlu diatur pada hosting sebelum pemakaian produksi.

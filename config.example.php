@@ -6,3 +6,4 @@ return [
   'db_user' => 'ISI_USER_DATABASE',
   'db_pass' => 'ISI_PASSWORD_DATABASE',
 ];
+

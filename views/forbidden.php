@@ -1,0 +1,1 @@
+<h1>Akses terbatas</h1><p>Menu ini tidak tersedia untuk peran Anda.</p><a href="?page=dashboard">Kembali ke dashboard</a>
