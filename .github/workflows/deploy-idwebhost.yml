@@ -32,7 +32,11 @@ jobs:
           test -n "$FTP_SERVER" || { echo "::error::Set FTP_SERVER secret"; exit 1; }
           test -n "$FTP_USERNAME" || { echo "::error::Set FTP_USERNAME secret"; exit 1; }
           test -n "$FTP_PASSWORD" || { echo "::error::Set FTP_PASSWORD secret"; exit 1; }
-          echo "FTP deployment root: / (akun FTP khusus subdomain wajib dibatasi ke Document Root)."
+          if [ "$FTP_USERNAME" = "mahad.ftp@mahad.ali.yayasanluqmanulhakimmarelan.com" ]; then
+            echo "::error::Akun FTP lama mengarah ke subfolder mahad.ftp. Ganti FTP_USERNAME dan FTP_PASSWORD secrets dengan akun khusus Document Root subdomain."
+            exit 1
+          fi
+          echo "FTP deployment directory: ./ (root akun FTP khusus subdomain)."
 
       - name: Deploy application using FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
