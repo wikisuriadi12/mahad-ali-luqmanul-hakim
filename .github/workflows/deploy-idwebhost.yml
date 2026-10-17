@@ -1,9 +1,10 @@
 name: Deploy Ma'had Ali to IDwebhost (FTP)
 
-# First deployment is manual. Enable push trigger only after verifying
-# the FTP directory and completing a successful test deployment.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/deploy-idwebhost.yml']
 
 permissions:
   contents: read
@@ -16,52 +17,87 @@ jobs:
   deploy:
     name: Upload application to IDwebhost
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout main
+      - name: Checkout deployment revision
         uses: actions/checkout@v4
         with:
-          ref: main
           persist-credentials: false
 
-      - name: Validate FTP configuration
+      # cPanel verified 2026-10-17:
+      # account yayas183 -> /home/yayas183
+      # document root -> /home/yayas183/mahad.ali.yayasanluqmanulhakimmarelan.com
+      - name: Validate login and upload without deleting remote files
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || 'mahad.ali.yayasanluqmanulhakimmarelan.com/' }}
         run: |
-          test -n "$FTP_SERVER" || { echo "::error::Set FTP_SERVER secret"; exit 1; }
-          test -n "$FTP_USERNAME" || { echo "::error::Set FTP_USERNAME secret"; exit 1; }
-          test -n "$FTP_PASSWORD" || { echo "::error::Set FTP_PASSWORD secret"; exit 1; }
-          if [ "$FTP_USERNAME" = "mahad.ftp@mahad.ali.yayasanluqmanulhakimmarelan.com" ]; then
-            echo "::error::Akun FTP lama mengarah ke subfolder mahad.ftp. Ganti FTP_USERNAME dan FTP_PASSWORD secrets dengan akun khusus Document Root subdomain."
-            exit 1
-          fi
-          echo "FTP deployment directory: ./ (root akun FTP khusus subdomain)."
+          python3 - <<'PY'
+          import ftplib
+          import os
+          import ssl
+          from pathlib import Path
 
-      - name: Deploy application using FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./
-          # FTP account is chrooted to the verified subdomain document root.
-          server-dir: ./
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/vendor/**
-            **/README.md
-            **/.htaccess
-            **/.user.ini
-            **/php.ini
-            **/config.php
-            **/config.example.php
-            **/database/**
-            **/uploads/**
-            **/*.sql
-            **/*.log
+          def fail(message):
+              print("::error::" + message)
+              raise SystemExit(1)
+
+          host = os.environ["FTP_SERVER"]
+          user = os.environ["FTP_USERNAME"]
+          password = os.environ["FTP_PASSWORD"]
+          target = os.environ["FTP_SERVER_DIR"]
+          expected = "mahad.ali.yayasanluqmanulhakimmarelan.com/"
+          if not host or not user or not password:
+              fail("Isi FTP_SERVER, FTP_USERNAME, dan FTP_PASSWORD di GitHub Actions secrets.")
+          if host not in ("ftp.yayasanluqmanulhakimmarelan.com", "sorosutan.idweb.host"):
+              fail("FTP_SERVER tidak cocok dengan server hosting yang diverifikasi.")
+          if user != "yayas183":
+              fail("FTP_USERNAME harus akun utama yayas183 sesuai pemetaan folder yang diverifikasi.")
+          if target != expected:
+              fail("Set FTP_SERVER_DIR menjadi " + expected + " ; ./ bukan folder subdomain untuk akun utama.")
+
+          # Explicit allowlist: no config, SQL, uploads, or server settings.
+          files = [Path("index.php")]
+          for folder, suffix in (("assets", ".css"), ("src", ".php"), ("views", ".php")):
+              files.extend(sorted(Path(folder).rglob("*" + suffix)))
+          if not all(p.is_file() and not p.is_symlink() for p in files):
+              fail("Paket aplikasi tidak valid.")
+
+          ftp = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30)
+          try:
+              ftp.connect(host, 21)
+              try:
+                  ftp.login(user, password)
+              except ftplib.error_perm as exc:
+                  if str(exc).startswith("530"):
+                      fail("FTP 530: login ditolak. Cocokkan FTP_USERNAME dan FTP_PASSWORD dengan akun FTP utama cPanel.")
+                  raise
+              ftp.prot_p()
+              # Do not create the deployment root: a wrong path must fail.
+              try:
+                  ftp.cwd(target)
+              except ftplib.error_perm:
+                  fail("Folder tujuan tidak dapat diakses; tidak ada file yang diunggah.")
+              root = ftp.pwd()
+              if not root.rstrip("/").endswith("/" + expected.rstrip("/")):
+                  fail("Server tidak berada di folder subdomain yang diharapkan.")
+              print("FTPS login berhasil; folder tujuan: " + root)
+              for path in files:
+                  ftp.cwd(root)
+                  for part in path.parts[:-1]:
+                      try:
+                          ftp.cwd(part)
+                      except ftplib.error_perm:
+                          ftp.mkd(part)
+                          ftp.cwd(part)
+                  with path.open("rb") as source:
+                      ftp.storbinary("STOR " + path.name, source)
+                  print("Uploaded: " + path.as_posix())
+              print("Upload selesai. Tidak ada perintah DELETE/RMD, SQL, atau migrasi database.")
+          except (ftplib.Error, OSError):
+              fail("Koneksi atau upload FTPS gagal. Periksa akses hosting dan sertifikat; tidak ada penghapusan dilakukan.")
+          finally:
+              ftp.close()
+          PY
