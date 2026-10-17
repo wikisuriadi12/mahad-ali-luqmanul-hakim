@@ -43,10 +43,13 @@ jobs:
             *) echo "::error::FTP_SERVER_DIR must start and end with /"; exit 1 ;;
           esac
           case "$FTP_SERVER_DIR" in
-            /|/public_html/|/www/)
-              echo "::error::Folder / belum diizinkan sebelum akun FTP khusus dibatasi ke Document Root subdomain. Hubungi pengelola hosting untuk memverifikasi root FTP."
+            /public_html/|/www/)
+              echo "::error::Direktori umum tidak diizinkan. Gunakan root FTP khusus subdomain (/)."
               exit 1 ;;
           esac
+          if [ "$FTP_SERVER_DIR" = "/" ]; then
+            echo "Deploy ke root akun FTP khusus subdomain (sesuai konfirmasi pemilik)."
+          fi
 
       - name: Deploy application using FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
