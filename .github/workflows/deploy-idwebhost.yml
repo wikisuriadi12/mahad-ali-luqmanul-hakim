@@ -26,13 +26,13 @@ jobs:
 
       # cPanel verified 2026-10-17:
       # account yayas183 -> /home/yayas183
-      # document root -> /home/yayas183/mahad.ali.yayasanluqmanulhakimmarelan.com
+      # document root -> /home/yayas183/mahad.aly.yayasanluqmanulhakimmarelan.com
       - name: Validate login and upload without deleting remote files
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || 'mahad.ali.yayasanluqmanulhakimmarelan.com/' }}
+          FTP_SERVER_DIR: mahad.aly.yayasanluqmanulhakimmarelan.com/
         run: |
           python3 - <<'PY'
           import ftplib
@@ -48,7 +48,7 @@ jobs:
           user = os.environ["FTP_USERNAME"]
           password = os.environ["FTP_PASSWORD"]
           target = os.environ["FTP_SERVER_DIR"]
-          expected = "mahad.ali.yayasanluqmanulhakimmarelan.com/"
+          expected = "mahad.aly.yayasanluqmanulhakimmarelan.com/"
           if not host or not user or not password:
               fail("Isi FTP_SERVER, FTP_USERNAME, dan FTP_PASSWORD di GitHub Actions secrets.")
           if host not in ("ftp.yayasanluqmanulhakimmarelan.com", "sorosutan.idweb.host"):
