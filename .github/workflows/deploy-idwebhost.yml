@@ -67,7 +67,7 @@ jobs:
 
           ftp = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30)
           try:
-              ftp.connect(host, 21)
+              ftp.connect("sorosutan.idweb.host", 21)  # Canonical hosting name for TLS certificate validation
               try:
                   ftp.login(user, password)
               except ftplib.error_perm as exc:
