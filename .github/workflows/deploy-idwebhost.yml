@@ -49,7 +49,7 @@ jobs:
             if curl -fsS http://127.0.0.1:8080/ > /dev/null; then break; fi
             sleep 1
           done
-          python3 tests/http.py
+          python3 -I tests/http.py
 
       # cPanel verified 2026-10-17:
       # account yayas183 -> /home/yayas183
