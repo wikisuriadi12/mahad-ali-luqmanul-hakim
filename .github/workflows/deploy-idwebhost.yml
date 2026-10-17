@@ -28,28 +28,11 @@ jobs:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR }}
         run: |
           test -n "$FTP_SERVER" || { echo "::error::Set FTP_SERVER secret"; exit 1; }
           test -n "$FTP_USERNAME" || { echo "::error::Set FTP_USERNAME secret"; exit 1; }
           test -n "$FTP_PASSWORD" || { echo "::error::Set FTP_PASSWORD secret"; exit 1; }
-          test -n "$FTP_SERVER_DIR" || { echo "::error::FTP_SERVER_DIR belum diatur. Buka Settings > Secrets and variables > Actions > Variables."; exit 1; }
-          if [ "$FTP_USERNAME" = "mahad.ftp@mahad.ali.yayasanluqmanulhakimmarelan.com" ]; then
-            echo "::error::Akun FTP lama hanya mengakses subfolder mahad.ftp. Buat akun FTP deployment yang root-nya adalah Document Root subdomain, lalu ganti FTP_USERNAME dan FTP_PASSWORD secrets."
-            exit 1
-          fi
-          case "$FTP_SERVER_DIR" in
-            /*/) ;;
-            *) echo "::error::FTP_SERVER_DIR must start and end with /"; exit 1 ;;
-          esac
-          case "$FTP_SERVER_DIR" in
-            /public_html/|/www/)
-              echo "::error::Direktori umum tidak diizinkan. Gunakan root FTP khusus subdomain (/)."
-              exit 1 ;;
-          esac
-          if [ "$FTP_SERVER_DIR" = "/" ]; then
-            echo "Deploy ke root akun FTP khusus subdomain (sesuai konfirmasi pemilik)."
-          fi
+          echo "FTP deployment root: / (akun FTP khusus subdomain wajib dibatasi ke Document Root)."
 
       - name: Deploy application using FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
@@ -60,7 +43,8 @@ jobs:
           protocol: ftps
           port: 21
           local-dir: ./
-          server-dir: ${{ vars.FTP_SERVER_DIR }}
+          # FTP account is chrooted to the verified subdomain document root.
+          server-dir: ./
           dangerous-clean-slate: false
           exclude: |
             **/.git*
