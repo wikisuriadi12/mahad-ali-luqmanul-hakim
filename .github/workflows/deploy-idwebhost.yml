@@ -96,8 +96,9 @@ jobs:
                       ftp.storbinary("STOR " + path.name, source)
                   print("Uploaded: " + path.as_posix())
               print("Upload selesai. Tidak ada perintah DELETE/RMD, SQL, atau migrasi database.")
-          except (ftplib.Error, OSError):
-              fail("Koneksi atau upload FTPS gagal. Periksa akses hosting dan sertifikat; tidak ada penghapusan dilakukan.")
+          except (ftplib.Error, OSError) as exc:
+              detail = str(exc).replace(password, "[redacted]").replace(user, "[account]")
+              fail("FTPS " + type(exc).__name__ + ": " + detail)
           finally:
               ftp.close()
           PY
