@@ -95,6 +95,28 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    require_role('bendahara');$target='keuangan';$jenis=input('jenis');$kategori=input('kategori');$date=input('tanggal');
    if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
    sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',[$date,$jenis,$kategori,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']]);
+  } elseif ($action==='koreksi_keuangan') {
+   require_role('bendahara');$target='keuangan';
+   $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$reason=field('alasan',255);$cdate=input('tanggal_koreksi');
+   if (!$id||!valid_date($cdate)) throw new RuntimeException('Transaksi atau tanggal koreksi tidak valid.');
+   $replace=input('ganti')==='1';$new=[];
+   if ($replace) {
+    $kind=input('jenis');$cat=input('kategori');$ndate=input('tanggal');
+    if (!in_array($kind,['masuk','keluar'],true)||!in_array($cat,categories($kind),true)||!valid_date($ndate)) throw new RuntimeException('Data transaksi pengganti tidak valid (tanggal, jenis, atau kategori).');
+    $new=[$ndate,$kind,$cat,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']];
+   }
+   $pdo=db();$pdo->beginTransaction();
+   try {
+    $orig=sql('SELECT id,jenis,kategori,uraian,nominal FROM transactions WHERE id=? FOR UPDATE',[$id])->fetch();
+    if (!$orig) throw new RuntimeException('Transaksi tidak ditemukan.');
+    if (sql('SELECT id FROM transaction_corrections WHERE transaction_id=? OR reversal_id=?',[$id,$id])->fetch()) throw new RuntimeException('Transaksi ini sudah dikoreksi atau merupakan transaksi pembalik.');
+    $note=preg_replace('/^(.{255}).*$/us','$1','KOREKSI #'.$id.': '.$orig['uraian']);
+    sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',[$cdate,$orig['jenis']==='masuk'?'keluar':'masuk',$orig['kategori'],$note,$orig['nominal'],$_SESSION['user_id']]);
+    $reversalId=(int)$pdo->lastInsertId();$replacementId=null;
+    if ($replace) {sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',$new);$replacementId=(int)$pdo->lastInsertId();}
+    sql('INSERT INTO transaction_corrections (transaction_id,reversal_id,replacement_id,alasan,created_by) VALUES (?,?,?,?,?)',[$id,$reversalId,$replacementId,$reason,$_SESSION['user_id']]);
+    $pdo->commit();
+   } catch (Throwable $e) {if ($pdo->inTransaction()) $pdo->rollBack();throw $e;}
   } elseif ($action==='change_password') {
    $target='akun';$old=$_POST['password_lama']??'';$new=$_POST['password_baru']??'';$confirm=$_POST['konfirmasi']??'';
    $u=sql('SELECT password_hash FROM users WHERE id=?',[$_SESSION['user_id']])->fetch();
