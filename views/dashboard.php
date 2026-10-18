@@ -33,7 +33,7 @@ if($keu){
  $garis='M'.implode(' L',array_map(fn($p)=>$p[0].' '.$p[1],$pts));
  $area=$garis.' L260 58 L0 58Z';
  $akhir=end($months);$selisihBulan=$akhir['masuk']-$akhir['keluar'];
- $terbaru=sql("SELECT tanggal,jenis,kategori,uraian,nominal FROM transactions ORDER BY tanggal DESC,id DESC LIMIT 5")->fetchAll();
+ $terbaru=sql("SELECT tanggal,jenis,kategori,".kolom_kategori_lain().",uraian,nominal FROM transactions ORDER BY tanggal DESC,id DESC LIMIT 5")->fetchAll();
 }
 
 // Kalimat ringkasan pada banner.
@@ -104,7 +104,7 @@ $k1=$bagi(count($baris1));$k2=$bagi(count($baris2));
 <?php $i=0; if($keu): ?>
 <section class="card trx <?=$k2[$i++]?>"><h2>Transaksi terbaru</h2><p class="sub">Lima catatan terakhir</p>
  <?php if($terbaru): ?><ul class="list"><?php foreach($terbaru as $x): $masuk=$x['jenis']==='masuk'; $tt=strtotime($x['tanggal']); ?>
-  <li><span class="ti <?=$masuk?'in':'out'?>"><?=icon($masuk?'plus':'minus')?></span><div class="t"><b><?=esc($x['uraian'])?></b><small><?=esc(ucfirst(str_replace('_',' ',$x['kategori'])).', '.date('j',$tt).' '.$bulan[(int)date('n',$tt)])?></small></div><span class="amt <?=$masuk?'in':'out'?>"><?=$masuk?'+':'-'?> <?=esc(rupiah_bulat($x['nominal']))?></span></li>
+  <li><span class="ti <?=$masuk?'in':'out'?>"><?=icon($masuk?'plus':'minus')?></span><div class="t"><b><?=esc($x['uraian'])?></b><small><?=esc(ucfirst(str_replace('_',' ',label_kategori($x))).', '.date('j',$tt).' '.$bulan[(int)date('n',$tt)])?></small></div><span class="amt <?=$masuk?'in':'out'?>"><?=$masuk?'+':'-'?> <?=esc(rupiah_bulat($x['nominal']))?></span></li>
  <?php endforeach; ?></ul><?php else: ?><p class="muted">Belum ada transaksi. Catat transaksi pertama di menu Keuangan.</p><?php endif; ?>
  <?php if(can_view('laporan')): ?><a class="more" href="?page=laporan">Lihat semua transaksi</a><?php endif; ?>
 </section>

@@ -11,7 +11,7 @@ Domain: https://mahad.aly.yayasanluqmanulhakimmarelan.com/
 - Pengurus (tabel `staff_members`): kode, nama, jabatan, no. HP, status aktif/nonaktif; tambah, edit, cari, daftar.
 - Dashboard modern (kartu ringkasan, grafik arus kas 6 bulan) dan tampilan responsif ponsel (menu geser, tabel menjadi kartu).
 - Aset: tambah, edit, kondisi, lokasi, nilai perolehan, cari, halaman daftar.
-- Keuangan: transaksi pemasukan/pengeluaran, validasi kategori dan tanggal.
+- Keuangan: transaksi pemasukan/pengeluaran, validasi kategori dan tanggal. Kategori "lainnya" dapat diketik manual (kolom `kategori_lain`).
 - Koreksi transaksi berjejak: transaksi tidak diubah/dihapus; bendahara/admin membuat transaksi pembalik (jenis berlawanan, kategori dan nominal sama) beserta alasan, tanggal koreksi, dan pembuatnya. Dapat disertai transaksi pengganti yang benar. Satu transaksi hanya dapat dikoreksi sekali; transaksi pembalik tidak dapat dikoreksi.
 - Laporan: rentang tanggal, saldo awal/akhir, CSV seluruh periode, cetak halaman.
 - Tampilan responsif, CSRF, prepared statements, escaping HTML, cookie HttpOnly/SameSite,
@@ -75,3 +75,13 @@ Laporan menghitung saldo transaksi tercatat, belum rekonsiliasi kas/bank atau ak
 Transaksi belum memiliki approval; tidak disediakan edit/hapus transaksi (kesalahan dikoreksi lewat transaksi pembalik).
 CSV memuat seluruh periode; cetak memuat 50 transaksi per halaman yang dipilih.
 Backup dan pembatasan login lintas sesi perlu diatur pada hosting sebelum pemakaian produksi.
+
+
+## Pembaruan database: kategori ketik sendiri
+Jalankan sekali di phpMyAdmin pada database sistem:
+
+```sql
+ALTER TABLE transactions ADD COLUMN kategori_lain VARCHAR(100) NULL AFTER uraian;
+```
+
+Tanpa perintah ini sistem tetap berjalan, tetapi memilih kategori "lainnya" dengan teks manual akan ditolak dengan pesan yang jelas.

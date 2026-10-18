@@ -57,6 +57,23 @@ function icon(string $name): string {
  ];
  return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($paths[$name]??'').'</svg>';
 }
+function kategori_lain_ada(): bool {
+ static $ada;
+ if ($ada===null) $ada=(bool)sql("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='transactions' AND COLUMN_NAME='kategori_lain' LIMIT 1")->fetchColumn();
+ return $ada;
+}
+function kolom_kategori_lain(string $alias=''): string { return kategori_lain_ada()?($alias!==''?$alias.'.':'').'kategori_lain':'NULL AS kategori_lain'; }
+function label_kategori(array $r): string {
+ $lain=trim((string)($r['kategori_lain']??''));
+ return ($r['kategori']??'')==='lainnya'&&$lain!==''?'lainnya: '.$lain:(string)($r['kategori']??'');
+}
+function insert_transaksi(array $v,string $lain=''): void {
+ // $v = [tanggal,jenis,kategori,uraian,nominal,created_by]; $lain = kategori ketikan sendiri (hanya untuk "lainnya").
+ if ($lain!==''&&$v[2]==='lainnya') {
+  if (!kategori_lain_ada()) throw new RuntimeException('Kolom kategori_lain belum ada di database. Jalankan perintah ALTER TABLE dari README terlebih dahulu.');
+  $v[]=$lain;sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by,kategori_lain) VALUES (?,?,?,?,?,?,?)',$v);
+ } else sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',$v);
+}
 function rupiah($v): string { return 'Rp '.number_format((float)$v,2,',','.'); }
 function field(string $key,int $max,bool $required=true): string {
  $value=input($key);
@@ -78,10 +95,10 @@ function report_filter(): array {
 function csv_cell($v): string { $s=(string)$v;return preg_match('/^[\s]*[=+@-]/u',$s) ? "'".$s : $s; }
 function export_report(): void {
  [$from,$to]=report_filter();
- $rows=sql('SELECT tanggal,jenis,kategori,uraian,nominal FROM transactions WHERE tanggal BETWEEN ? AND ? ORDER BY tanggal,id',[$from,$to]);
+ $rows=sql('SELECT tanggal,jenis,kategori,'.kolom_kategori_lain().',uraian,nominal FROM transactions WHERE tanggal BETWEEN ? AND ? ORDER BY tanggal,id',[$from,$to]);
  header('Content-Type: text/csv; charset=UTF-8');header('Content-Disposition: attachment; filename="laporan-keuangan.csv"');
  $f=fopen('php://output','w');fwrite($f,"\xEF\xBB\xBF");fputcsv($f,['Tanggal','Jenis','Kategori','Uraian','Nominal'],',','"','');
- while ($r=$rows->fetch()) fputcsv($f,array_map('csv_cell',array_values($r)),',','"','');fclose($f);
+ while ($r=$rows->fetch()) fputcsv($f,array_map('csv_cell',[$r['tanggal'],$r['jenis'],label_kategori($r),$r['uraian'],$r['nominal']]),',','"','');fclose($f);
 }
 if (isset($_SESSION['user_id'])) {
  try {
@@ -133,26 +150,26 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
   } elseif ($action==='add_keuangan') {
    require_role('bendahara');$target='keuangan';$jenis=input('jenis');$kategori=input('kategori');$date=input('tanggal');
    if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
-   sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',[$date,$jenis,$kategori,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']]);
+   insert_transaksi([$date,$jenis,$kategori,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']],$kategori==='lainnya'?field('kategori_lain',100,false):'');
   } elseif ($action==='koreksi_keuangan') {
    require_role('bendahara');$target='keuangan';
    $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$reason=field('alasan',255);$cdate=input('tanggal_koreksi');
    if (!$id||!valid_date($cdate)) throw new RuntimeException('Transaksi atau tanggal koreksi tidak valid.');
-   $replace=input('ganti')==='1';$new=[];
+   $replace=input('ganti')==='1';$new=[];$newLain='';
    if ($replace) {
     $kind=input('jenis');$cat=input('kategori');$ndate=input('tanggal');
     if (!in_array($kind,['masuk','keluar'],true)||!in_array($cat,categories($kind),true)||!valid_date($ndate)) throw new RuntimeException('Data transaksi pengganti tidak valid (tanggal, jenis, atau kategori).');
-    $new=[$ndate,$kind,$cat,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']];
+    $new=[$ndate,$kind,$cat,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']];$newLain=$cat==='lainnya'?field('kategori_lain',100,false):'';
    }
    $pdo=db();$pdo->beginTransaction();
    try {
-    $orig=sql('SELECT id,jenis,kategori,uraian,nominal FROM transactions WHERE id=? FOR UPDATE',[$id])->fetch();
+    $orig=sql('SELECT id,jenis,kategori,'.kolom_kategori_lain().',uraian,nominal FROM transactions WHERE id=? FOR UPDATE',[$id])->fetch();
     if (!$orig) throw new RuntimeException('Transaksi tidak ditemukan.');
     if (sql('SELECT id FROM transaction_corrections WHERE transaction_id=? OR reversal_id=?',[$id,$id])->fetch()) throw new RuntimeException('Transaksi ini sudah dikoreksi atau merupakan transaksi pembalik.');
     $note=preg_replace('/^(.{255}).*$/us','$1','KOREKSI #'.$id.': '.$orig['uraian']);
-    sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',[$cdate,$orig['jenis']==='masuk'?'keluar':'masuk',$orig['kategori'],$note,$orig['nominal'],$_SESSION['user_id']]);
+    insert_transaksi([$cdate,$orig['jenis']==='masuk'?'keluar':'masuk',$orig['kategori'],$note,$orig['nominal'],$_SESSION['user_id']],(string)($orig['kategori_lain']??''));
     $reversalId=(int)$pdo->lastInsertId();$replacementId=null;
-    if ($replace) {sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',$new);$replacementId=(int)$pdo->lastInsertId();}
+    if ($replace) {insert_transaksi($new,$newLain);$replacementId=(int)$pdo->lastInsertId();}
     sql('INSERT INTO transaction_corrections (transaction_id,reversal_id,replacement_id,alasan,created_by) VALUES (?,?,?,?,?)',[$id,$reversalId,$replacementId,$reason,$_SESSION['user_id']]);
     $pdo->commit();
    } catch (Throwable $e) {if ($pdo->inTransaction()) $pdo->rollBack();throw $e;}
