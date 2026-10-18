@@ -74,6 +74,9 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
     if ($_SESSION['login_fails']>=5) {$_SESSION['login_wait']=time()+60;$_SESSION['login_fails']=0;}
     throw new RuntimeException('Username atau password tidak cocok.');
    }
+   $secure=!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off';
+   if (input('ingat')==='1') setcookie('ingat_username',$u['username'],['expires'=>time()+2592000,'path'=>'/','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax']);
+   else setcookie('ingat_username','',['expires'=>time()-3600,'path'=>'/','secure'=>$secure,'httponly'=>true,'samesite'=>'Lax']);
    session_regenerate_id(true);$_SESSION=[];
    $_SESSION['user_id']=$u['id'];$_SESSION['username']=$u['username'];$_SESSION['role']=$u['role'];$_SESSION['auth_version']=hash('sha256',$u['password_hash']);redirect('dashboard');
   }
