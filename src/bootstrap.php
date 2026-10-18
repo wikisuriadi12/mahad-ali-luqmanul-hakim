@@ -74,6 +74,9 @@ function insert_transaksi(array $v,string $lain=''): void {
   $v[]=$lain;sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by,kategori_lain) VALUES (?,?,?,?,?,?,?)',$v);
  } else sql('INSERT INTO transactions (tanggal,jenis,kategori,uraian,nominal,created_by) VALUES (?,?,?,?,?,?)',$v);
 }
+function siapkan_log_transaksi(): void {
+ sql("CREATE TABLE IF NOT EXISTS transaction_log (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, transaction_id BIGINT UNSIGNED NOT NULL, aksi ENUM('ubah','hapus') NOT NULL, sebelum TEXT NOT NULL, sesudah TEXT NULL, oleh BIGINT UNSIGNED NOT NULL, waktu TIMESTAMP DEFAULT CURRENT_TIMESTAMP, INDEX idx_transaction (transaction_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
 function rupiah($v): string { return 'Rp '.number_format((float)$v,2,',','.'); }
 function field(string $key,int $max,bool $required=true): string {
  $value=input($key);
@@ -108,7 +111,7 @@ if (isset($_SESSION['user_id'])) {
  } catch (Throwable $e) { error_log($e->getMessage());http_response_code(503);exit('Database belum siap. Administrator perlu memeriksa konfigurasi dan tabel sistem.'); }
 }
 if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
- verify_csrf();$action=input('action');$target=query('page','dashboard');
+ verify_csrf();$action=input('action');$target=query('page','dashboard');$pesan='Berhasil disimpan.';
  try {
   if ($action==='login') {
    $target='login';
@@ -151,6 +154,36 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    require_role('bendahara');$target='keuangan';$jenis=input('jenis');$kategori=input('kategori');$date=input('tanggal');
    if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
    insert_transaksi([$date,$jenis,$kategori,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']],$kategori==='lainnya'?field('kategori_lain',100,false):'');
+   $_SESSION['transaksi_baru']=(int)db()->lastInsertId();
+  } elseif (in_array($action,['edit_keuangan','hapus_keuangan'],true)) {
+   require_role('bendahara');$target='keuangan';
+   $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+   if (!$id) throw new RuntimeException('Transaksi tidak valid.');
+   $baru=null;$lain='';
+   if ($action==='edit_keuangan') {
+    $jenis=input('jenis');$kategori=input('kategori');$date=input('tanggal');
+    if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
+    $lain=$kategori==='lainnya'?field('kategori_lain',100,false):'';
+    if ($lain!==''&&!kategori_lain_ada()) throw new RuntimeException('Kolom kategori_lain belum ada di database. Jalankan perintah ALTER TABLE dari README terlebih dahulu.');
+    $baru=['tanggal'=>$date,'jenis'=>$jenis,'kategori'=>$kategori,'kategori_lain'=>$lain,'uraian'=>field('uraian',255),'nominal'=>money(input('nominal'),true)];
+   }
+   siapkan_log_transaksi();
+   $pdo=db();$pdo->beginTransaction();
+   try {
+    $lama=sql('SELECT id,tanggal,jenis,kategori,'.kolom_kategori_lain().',uraian,nominal FROM transactions WHERE id=? FOR UPDATE',[$id])->fetch(PDO::FETCH_ASSOC);
+    if (!$lama) throw new RuntimeException('Transaksi tidak ditemukan.');
+    if ($action==='hapus_keuangan') {
+     if (sql('SELECT id FROM transaction_corrections WHERE transaction_id=? OR reversal_id=? OR replacement_id=?',[$id,$id,$id])->fetch()) throw new RuntimeException('Transaksi ini terkait koreksi lama sehingga tidak dapat dihapus.');
+     sql('DELETE FROM transactions WHERE id=?',[$id]);$pesan='Transaksi dihapus.';
+    } else {
+     $v=[$baru['tanggal'],$baru['jenis'],$baru['kategori'],$baru['uraian'],$baru['nominal']];
+     if (kategori_lain_ada()) {$v[]=$lain!==''?$lain:null;$v[]=$id;sql('UPDATE transactions SET tanggal=?,jenis=?,kategori=?,uraian=?,nominal=?,kategori_lain=? WHERE id=?',$v);}
+     else {$v[]=$id;sql('UPDATE transactions SET tanggal=?,jenis=?,kategori=?,uraian=?,nominal=? WHERE id=?',$v);}
+     $pesan='Transaksi diperbarui.';$_SESSION['transaksi_baru']=$id;
+    }
+    sql('INSERT INTO transaction_log (transaction_id,aksi,sebelum,sesudah,oleh) VALUES (?,?,?,?,?)',[$id,$action==='hapus_keuangan'?'hapus':'ubah',json_encode($lama,JSON_UNESCAPED_UNICODE),$baru?json_encode($baru,JSON_UNESCAPED_UNICODE):null,$_SESSION['user_id']]);
+    $pdo->commit();
+   } catch (Throwable $e) {if ($pdo->inTransaction()) $pdo->rollBack();throw $e;}
   } elseif ($action==='koreksi_keuangan') {
    require_role('bendahara');$target='keuangan';
    $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);$reason=field('alasan',255);$cdate=input('tanggal_koreksi');
@@ -185,7 +218,7 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    if (!preg_match('/^[A-Za-z0-9_.-]{3,80}$/D',$username)||!in_array($role,['admin','peserta','aset','bendahara','pimpinan'],true)||!is_string($password)||strlen($password)<12||strlen($password)>72) throw new RuntimeException('Username, peran, atau password tidak valid (password minimal 12 karakter).');
    sql('INSERT INTO users (username,password_hash,role) VALUES (?,?,?)',[$username,password_hash($password,PASSWORD_DEFAULT),$role]);
   } else throw new RuntimeException('Aksi tidak dikenal.');
-  $_SESSION['flash']='Berhasil disimpan.';
+  $_SESSION['flash']=$pesan;
  } catch (PDOException $e) {error_log($e->getMessage());$_SESSION['flash']=$e->getCode()==='23000'?'Nomor induk, kode, atau username sudah digunakan.':'Database belum siap atau penyimpanan gagal. Hubungi administrator.';}
  catch (RuntimeException $e) {$_SESSION['flash']=$e->getMessage();}
  redirect($target);

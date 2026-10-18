@@ -45,6 +45,12 @@ details summary{cursor:pointer;color:var(--teal);font-weight:600}
 table{border-collapse:collapse;width:100%;min-width:600px;background:#fff}
 th,td{border-bottom:1px solid var(--line);text-align:left;padding:11px 12px;vertical-align:top}
 th{background:#eef4f6;color:var(--navy);font-size:.85rem;position:sticky;top:0}tbody tr:nth-child(even){background:#fafcfd}tbody tr:hover{background:#f1f7f9}
+/* Aksi tabel */
+.aksi{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.aksi form{margin:0}
+.mini{min-height:34px;padding:6px 14px;margin:0;font-size:.85rem;width:auto}.danger{background:#9e4040}.danger:hover{background:#873434}
+.btnlink{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:10px;background:#e8f0f4;color:var(--navy);font-weight:600;font-size:.85rem;text-decoration:none}.btnlink:hover{background:#d6e4eb}
+td input,td select{margin-top:0;min-width:120px}td select{min-width:150px}td select+input{margin-top:6px}
+tr.baru{animation:sorot 3s ease-out}@keyframes sorot{0%,60%{background:#fff0c2}100%{background:transparent}}
 /* Dashboard */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.top h1{margin:0}.top .date{color:var(--muted);font-size:.92rem}
 .layout{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}.layout>*{min-width:0}.layout .card{margin:0}
@@ -123,6 +129,8 @@ th{background:#eef4f6;color:var(--navy);font-size:.85rem;position:sticky;top:0}t
  .tablewrap tbody tr:nth-child(even){background:#fff}
  .tablewrap td{display:flex;justify-content:space-between;gap:14px;border:0;padding:8px 0;text-align:right;word-break:break-word}
  .tablewrap td:before{content:attr(data-label);font-weight:600;color:var(--muted);text-align:left;flex:none}
+ .tablewrap td:has(input),.tablewrap td:has(select){display:block;text-align:left}.tablewrap td:has(input):before,.tablewrap td:has(select):before{display:block;margin-bottom:4px}.tablewrap td:has(.aksi){display:block;text-align:left}.tablewrap td:has(.aksi):before{display:block;margin-bottom:6px}
+ .mini{width:auto}
  .tablewrap td[colspan]{display:block;text-align:center}.tablewrap td[colspan]:before{content:none}
  .tablewrap td:has(details){display:block;text-align:left}.tablewrap td:has(details):before{display:block;margin-bottom:4px}
  .bnav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(8px + env(safe-area-inset-bottom));z-index:30;box-shadow:0 -6px 20px #17394a14}

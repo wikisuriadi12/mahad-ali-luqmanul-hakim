@@ -68,3 +68,13 @@ CREATE TABLE IF NOT EXISTS staff_members (
  status ENUM('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS transaction_log (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ transaction_id BIGINT UNSIGNED NOT NULL,
+ aksi ENUM('ubah','hapus') NOT NULL,
+ sebelum TEXT NOT NULL,
+ sesudah TEXT NULL,
+ oleh BIGINT UNSIGNED NOT NULL,
+ waktu TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_transaction (transaction_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
