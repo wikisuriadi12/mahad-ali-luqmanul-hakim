@@ -75,7 +75,7 @@ for mod,code,extra in (('guru','G-001',{'bidang_ajar':'Fiqih','no_hp':'0812'}),(
  _,s=request(admin,mod,{'csrf':token(s),'id':'999',**data})
  assert 'Data tidak ditemukan' in s,mod
 _,s=request(admin,'dashboard')
-assert 'Jumlah Guru' in s and 'Jumlah Pengurus' in s
+assert 'Kelola guru' in s and 'Kelola pengurus' in s
 for mod in ('guru','pengurus'):
  _,s=request(pimp,mod);assert request(pimp,mod)[0]==200 and 'Simpan' not in s
  assert request(pimp,mod,{'csrf':token(s),'action':'save_'+mod})[0]==403
@@ -83,7 +83,7 @@ for mod in ('guru','pengurus'):
 for role,allowed,forbidden in [('peserta','peserta','keuangan'),('aset','aset','peserta'),('bendahara','keuangan','aset'),('pimpinan','laporan','pengguna')]:
  c=login(role);assert request(c,allowed)[0]==200;assert request(c,forbidden)[0]==403
  _,s=request(c,'dashboard')
- if role in ['peserta','aset']:assert 'Total Pemasukan' not in s
+ if role in ['peserta','aset']:assert 'Saldo tercatat' not in s
  if role=='pimpinan':assert request(c,'peserta',{'csrf':token(s),'action':'save_peserta'})[0]==403
 other_admin=login('admin')
 _,s=request(admin,'akun')
