@@ -81,6 +81,27 @@ _,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':
 assert 'Diabaikan' not in s
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'lainnya','kategori_lain':'x'*101,'nominal':'0.01','uraian':'Terlalu panjang'})
 assert 'Terlalu panjang</td>' not in s
+_,s=request(admin,'keuangan')
+mid=re.search(r'<td>(\d+)</td>\s*<td>2027-06-01</td><td>masuk</td><td>lainnya: ',s).group(1)
+assert 'tr class="baru"' not in s and 'value="hapus_keuangan"' in s
+_,s=request(admin,'page=keuangan&edit='+mid)
+assert 'name="uraian" form="f-edit"' in s and 'value="edit_keuangan"' in s
+assert request(admin,'keuangan',{'csrf':'bad','action':'edit_keuangan','id':mid})[0]==419
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'edit_keuangan','id':mid,'tanggal':'2027-06-02','jenis':'keluar','kategori':'infaq','nominal':'1.00','uraian':'Salah kategori'})
+assert 'Tanggal, jenis, atau kategori tidak valid' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'edit_keuangan','id':mid,'tanggal':'2027-06-02','jenis':'keluar','kategori':'lainnya','kategori_lain':'<b>Pembangunan</b>','nominal':'1.00','uraian':'Sudah diubah'})
+assert 'Transaksi diperbarui' in s and 'Sudah diubah' in s and 'lainnya: &lt;b&gt;Pembangunan&lt;/b&gt;' in s and '<b>Pembangunan</b>' not in s and 'class="baru"' in s,s[:300]
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'edit_keuangan','id':'999999','tanggal':'2027-06-02','jenis':'keluar','kategori':'konsumsi','nominal':'1.00','uraian':'Tidak ada'})
+assert 'Transaksi tidak ditemukan' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':'1'})
+assert 'tidak dapat dihapus' in s
+_,s=request(pimp,'keuangan');assert 'hapus_keuangan' not in s and 'edit_keuangan' not in s
+assert request(pimp,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})[0]==403
+assert request(pimp,'keuangan',{'csrf':token(s),'action':'edit_keuangan','id':mid})[0]==403
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})
+assert 'Transaksi dihapus' in s and 'Sudah diubah' not in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})
+assert 'Transaksi tidak ditemukan' in s
 _,s=request(admin,'dashboard')
 assert 'Kelola guru' in s and 'Kelola pengurus' in s
 for mod in ('guru','pengurus'):

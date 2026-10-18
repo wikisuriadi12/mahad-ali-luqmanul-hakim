@@ -85,3 +85,7 @@ ALTER TABLE transactions ADD COLUMN kategori_lain VARCHAR(100) NULL AFTER uraian
 ```
 
 Tanpa perintah ini sistem tetap berjalan, tetapi memilih kategori "lainnya" dengan teks manual akan ditolak dengan pesan yang jelas.
+
+
+## Edit dan hapus transaksi
+Bendahara/admin dapat mengubah atau menghapus transaksi langsung dari tabel Keuangan. Setiap perubahan dan penghapusan dicatat di tabel `transaction_log` (siapa, kapan, isi sebelum dan sesudah); tabel ini dibuat otomatis saat pertama kali dipakai. Transaksi yang terkait koreksi lama tidak dapat dihapus.
