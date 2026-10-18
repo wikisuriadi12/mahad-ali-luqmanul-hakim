@@ -72,5 +72,5 @@ th{background:#eef4f6;color:var(--navy);font-size:.85rem;text-transform:none;pos
  .tablewrap td:has(details){display:block;text-align:left}.tablewrap td:has(details):before{display:block;margin-bottom:4px}
  .chart{gap:6px;height:160px}
 }
-@media(max-width:380px){.grid{grid-template-columns:1fr}}
+@media(max-width:330px){.grid{grid-template-columns:1fr}}
 @media print{header,footer,form,.pager,.hero,.userchip{display:none}body{background:white;color:black}main{max-width:none;margin:0;padding:0}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}.tablewrap{overflow:visible;border:0}table{min-width:0;font-size:10pt}.grid{grid-template-columns:repeat(2,1fr)}a{display:none}}
