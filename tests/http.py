@@ -14,6 +14,13 @@ def login(role):
  assert status==200 and 'Keluar' in s,(role,status,s)
  return c
 admin=login('admin')
+jar=http.cookiejar.CookieJar();rc=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+_,s=request(rc);assert 'name="ingat"' in s and 'Ingat username' in s
+status,s=request(rc,data={'csrf':token(s),'action':'login','username':'admin','password':'Testing-Password-123','ingat':'1'})
+assert status==200 and 'Keluar' in s and any(k.name=='ingat_username' and k.value=='admin' for k in jar)
+jar2=http.cookiejar.CookieJar();rd=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar2));_,s=request(rd)
+status,s=request(rd,data={'csrf':token(s),'action':'login','username':'admin','password':'Testing-Password-123'})
+assert status==200 and 'Keluar' in s and not any(k.name=='ingat_username' and k.value for k in jar2)
 _,s=request(admin,'peserta')
 assert request(admin,'peserta',{'csrf':'bad','action':'save_peserta'})[0]==419
 _,s=request(admin,'peserta',{'csrf':token(s),'action':'save_peserta','nomor_induk':'001','nama':'<script>alert(1)</script>','angkatan':'2026','nama_wali':'Wali','status':'aktif'})
