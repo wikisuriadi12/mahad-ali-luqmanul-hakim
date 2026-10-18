@@ -1,4 +1,4 @@
-name: Deploy Ma'had Ali to IDwebhost (FTP)
+name: Deploy Ma'had Aly to IDwebhost (FTP)
 
 on:
   workflow_dispatch:
