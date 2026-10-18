@@ -36,4 +36,16 @@ CREATE TABLE IF NOT EXISTS transactions (
  CONSTRAINT fk_transactions_user FOREIGN KEY (created_by) REFERENCES users(id),
  INDEX idx_tanggal (tanggal)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+CREATE TABLE IF NOT EXISTS transaction_corrections (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ transaction_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ reversal_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ replacement_id BIGINT UNSIGNED NULL UNIQUE,
+ alasan VARCHAR(255) NOT NULL,
+ created_by BIGINT UNSIGNED NOT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_corr_tx FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+ CONSTRAINT fk_corr_rev FOREIGN KEY (reversal_id) REFERENCES transactions(id),
+ CONSTRAINT fk_corr_rep FOREIGN KEY (replacement_id) REFERENCES transactions(id),
+ CONSTRAINT fk_corr_user FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

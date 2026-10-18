@@ -9,6 +9,7 @@ Domain: https://mahad.aly.yayasanluqmanulhakimmarelan.com/
 - Peserta: tambah, edit, status aktif/nonaktif/lulus, cari, halaman daftar.
 - Aset: tambah, edit, kondisi, lokasi, nilai perolehan, cari, halaman daftar.
 - Keuangan: transaksi pemasukan/pengeluaran, validasi kategori dan tanggal.
+- Koreksi transaksi berjejak: transaksi tidak diubah/dihapus; bendahara/admin membuat transaksi pembalik (jenis berlawanan, kategori dan nominal sama) beserta alasan, tanggal koreksi, dan pembuatnya. Dapat disertai transaksi pengganti yang benar. Satu transaksi hanya dapat dikoreksi sekali; transaksi pembalik tidak dapat dikoreksi.
 - Laporan: rentang tanggal, saldo awal/akhir, CSV seluruh periode, cetak halaman.
 - Tampilan responsif, CSRF, prepared statements, escaping HTML, cookie HttpOnly/SameSite,
   pembatasan percobaan login per sesi (bukan pengganti rate limiting server).
@@ -29,7 +30,7 @@ Semua peran dapat mengganti password sendiri. Perubahan password membatalkan ses
 2. Hubungkan user MySQL aplikasi (sebelumnya `yayas183_mahaduser`) ke database itu saja.
    Untuk runtime aplikasi cukup SELECT, INSERT, UPDATE. Impor tabel dilakukan sebagai pemilik melalui phpMyAdmin.
 3. Di phpMyAdmin pilih database aplikasi, lalu impor `database/schema.sql`.
-   Berisi empat CREATE TABLE IF NOT EXISTS; tidak ada DROP, TRUNCATE, DELETE, atau data contoh.
+   Berisi lima CREATE TABLE IF NOT EXISTS; tidak ada DROP, TRUNCATE, DELETE, atau data contoh.
 4. Di document root `/home/yayas183/mahad.aly.yayasanluqmanulhakimmarelan.com`,
    salin `config.example.php` menjadi `config.php` dan isi host localhost, nama database,
    username MySQL lengkap, serta password MySQL yang dimasukkan sendiri. Jangan commit config.php.
@@ -43,6 +44,12 @@ Semua peran dapat mengganti password sendiri. Perubahan password membatalkan ses
    ke users (username, password_hash, role). Jangan menyimpan password polos/MD5.
 7. Login HTTPS dan periksa Dashboard, Peserta, Aset, Keuangan, Laporan, Akun.
    Akun sementara tidak kedaluwarsa otomatis; gunakan menu Akun untuk mengganti password.
+
+## Pembaruan database yang sudah terpasang
+
+Untuk fitur koreksi transaksi, impor ulang `database/schema.sql` di phpMyAdmin pada database aplikasi.
+Tabel lama tidak disentuh (CREATE TABLE IF NOT EXISTS); hanya tabel `transaction_corrections` yang ditambahkan.
+User MySQL aplikasi tetap cukup SELECT, INSERT, UPDATE. Unggah kode terbaru lewat deploy otomatis setelah tabel dibuat.
 
 ## Deployment
 Workflow menguji PHP dan alur HTTP menggunakan database MariaDB sementara di GitHub Actions,
@@ -60,6 +67,6 @@ laporan saldo, CSV, batas hak akses, ganti password dan pembatalan sesi lama.
 
 ## Batas operasional
 Laporan menghitung saldo transaksi tercatat, belum rekonsiliasi kas/bank atau akuntansi berpasangan.
-Transaksi belum memiliki approval dan koreksi berjejak; tidak disediakan edit/hapus transaksi.
+Transaksi belum memiliki approval; tidak disediakan edit/hapus transaksi (kesalahan dikoreksi lewat transaksi pembalik).
 CSV memuat seluruh periode; cetak memuat 50 transaksi per halaman yang dipilih.
 Backup dan pembatasan login lintas sesi perlu diatur pada hosting sebelum pemakaian produksi.

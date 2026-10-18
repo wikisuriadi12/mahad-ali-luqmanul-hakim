@@ -34,6 +34,23 @@ assert '80,15' in s and '2 transaksi' in s
 status,s=request(admin,'page=laporan&dari=2026-01-01&sampai=2026-01-31&export=csv')
 rows=list(csv.reader(io.StringIO(s)))
 assert status==200 and len(rows)==3 and rows[1][3]=="'=test"
+_,s=request(admin,'keuangan')
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'1','alasan':'Salah nominal','tanggal_koreksi':'2026-03-01','ganti':'1','tanggal':'2026-01-01','jenis':'masuk','kategori':'donasi','nominal':'150.00','uraian':'Donasi benar'})
+assert 'Berhasil disimpan' in s and 'Dikoreksi' in s and 'Salah nominal' in s and 'KOREKSI #1' in s
+_,s=request(admin,'page=laporan&dari=2026-01-01&sampai=2026-03-31')
+assert '129,90' in s and '4 transaksi' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'1','alasan':'Ulang','tanggal_koreksi':'2026-03-02'})
+assert 'sudah dikoreksi' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'3','alasan':'Koreksi pembalik','tanggal_koreksi':'2026-03-02'})
+assert 'sudah dikoreksi atau merupakan transaksi pembalik' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'2','alasan':'','tanggal_koreksi':'2026-03-02'})
+assert 'kosong atau terlalu panjang' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'2','alasan':'Salah catat','tanggal_koreksi':'2026-02-30'})
+assert 'tidak valid' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'999','alasan':'Tidak ada','tanggal_koreksi':'2026-03-02'})
+assert 'Transaksi tidak ditemukan' in s
+pimp=login('pimpinan');_,s=request(pimp,'keuangan')
+assert 'Simpan Koreksi' not in s and request(pimp,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'2','alasan':'x','tanggal_koreksi':'2026-03-02'})[0]==403
 for role,allowed,forbidden in [('peserta','peserta','keuangan'),('aset','aset','peserta'),('bendahara','keuangan','aset'),('pimpinan','laporan','pengguna')]:
  c=login(role);assert request(c,allowed)[0]==200;assert request(c,forbidden)[0]==403
  _,s=request(c,'dashboard')
@@ -44,4 +61,4 @@ _,s=request(admin,'akun')
 _,s=request(admin,'akun',{'csrf':token(s),'action':'change_password','password_lama':'Testing-Password-123','password_baru':'Changed-Password-123','konfirmasi':'Changed-Password-123'})
 assert 'Berhasil disimpan' in s
 assert 'Masuk ke Sistem' in request(other_admin,'dashboard')[1]
-print('PASS: login, CSRF, XSS escaping, participant edits, asset creation, money, dates, reports, CSV, roles, password/session revocation')
+print('PASS: koreksi transaksi (pembalik, pengganti, tolak ganda), login, CSRF, XSS escaping, participant edits, asset creation, money, dates, reports, CSV, roles, password/session revocation')
