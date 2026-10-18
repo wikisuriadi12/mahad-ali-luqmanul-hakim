@@ -58,6 +58,28 @@ _,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'
 assert 'Transaksi tidak ditemukan' in s
 pimp=login('pimpinan');_,s=request(pimp,'keuangan')
 assert 'Simpan Koreksi' not in s and request(pimp,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'2','alasan':'x','tanggal_koreksi':'2026-03-02'})[0]==403
+for mod,code,extra in (('guru','G-001',{'bidang_ajar':'Fiqih','no_hp':'0812'}),('pengurus','P-001',{'jabatan':'Sekretaris','no_hp':'0813'})):
+ _,s=request(admin,mod)
+ assert request(admin,mod,{'csrf':'bad','action':'save_'+mod})[0]==419
+ data={'action':'save_'+mod,'kode':code,'nama':'<b>Orang Satu</b>','status':'aktif',**extra}
+ _,s=request(admin,mod,{'csrf':token(s),**data})
+ assert 'Berhasil disimpan' in s and '&lt;b&gt;Orang Satu' in s and '<b>Orang Satu' not in s,mod
+ _,s=request(admin,mod,{'csrf':token(s),**data})
+ assert 'sudah digunakan' in s,mod
+ _,s=request(admin,mod,{'csrf':token(s),**{**data,'kode':code+'X','status':'bukan-status'}})
+ assert 'Status tidak valid' in s,mod
+ _,s=request(admin,'page=%s&edit=1'%mod)
+ assert 'value="%s"'%code in s,mod
+ _,s=request(admin,mod,{'csrf':token(s),'id':'1',**{**data,'nama':'Orang Dua'}})
+ assert 'Orang Dua' in s and 'Berhasil disimpan' in s,mod
+ _,s=request(admin,mod,{'csrf':token(s),'id':'999',**data})
+ assert 'Data tidak ditemukan' in s,mod
+_,s=request(admin,'dashboard')
+assert 'Jumlah Guru' in s and 'Jumlah Pengurus' in s
+for mod in ('guru','pengurus'):
+ _,s=request(pimp,mod);assert request(pimp,mod)[0]==200 and 'Simpan' not in s
+ assert request(pimp,mod,{'csrf':token(s),'action':'save_'+mod})[0]==403
+ assert request(login('peserta'),mod)[0]==403
 for role,allowed,forbidden in [('peserta','peserta','keuangan'),('aset','aset','peserta'),('bendahara','keuangan','aset'),('pimpinan','laporan','pengguna')]:
  c=login(role);assert request(c,allowed)[0]==200;assert request(c,forbidden)[0]==403
  _,s=request(c,'dashboard')
@@ -68,4 +90,4 @@ _,s=request(admin,'akun')
 _,s=request(admin,'akun',{'csrf':token(s),'action':'change_password','password_lama':'Testing-Password-123','password_baru':'Changed-Password-123','konfirmasi':'Changed-Password-123'})
 assert 'Berhasil disimpan' in s
 assert 'Masuk ke Sistem' in request(other_admin,'dashboard')[1]
-print('PASS: koreksi transaksi (pembalik, pengganti, tolak ganda), login, CSRF, XSS escaping, participant edits, asset creation, money, dates, reports, CSV, roles, password/session revocation')
+print('PASS: data guru dan pengurus, koreksi transaksi (pembalik, pengganti, tolak ganda), login, CSRF, XSS escaping, participant edits, asset creation, money, dates, reports, CSV, roles, password/session revocation')
