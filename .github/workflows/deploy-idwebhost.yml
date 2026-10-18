@@ -87,7 +87,7 @@ jobs:
 
           # Explicit allowlist: no config, SQL, uploads, or server settings.
           files = [Path("index.php")]
-          for folder, suffix in (("assets", ".css"), ("src", ".php"), ("views", ".php")):
+          for folder, suffix in (("assets", ".css"), ("assets", ".png"), ("src", ".php"), ("views", ".php")):
               files.extend(sorted(Path(folder).rglob("*" + suffix)))
           if not all(p.is_file() and not p.is_symlink() for p in files):
               fail("Paket aplikasi tidak valid.")
