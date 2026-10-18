@@ -74,6 +74,13 @@ for mod,code,extra in (('guru','G-001',{'bidang_ajar':'Fiqih','no_hp':'0812'}),(
  assert 'Orang Dua' in s and 'Berhasil disimpan' in s,mod
  _,s=request(admin,mod,{'csrf':token(s),'id':'999',**data})
  assert 'Data tidak ditemukan' in s,mod
+_,s=request(admin,'keuangan')
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'lainnya','kategori_lain':'<i>Zakat fitrah</i>','nominal':'0.01','uraian':'Kategori manual'})
+assert 'lainnya: &lt;i&gt;Zakat fitrah&lt;/i&gt;' in s and '<i>Zakat fitrah</i>' not in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'infaq','kategori_lain':'Diabaikan','nominal':'0.01','uraian':'Kategori baku'})
+assert 'Diabaikan' not in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'lainnya','kategori_lain':'x'*101,'nominal':'0.01','uraian':'Terlalu panjang'})
+assert 'Terlalu panjang</td>' not in s
 _,s=request(admin,'dashboard')
 assert 'Kelola guru' in s and 'Kelola pengurus' in s
 for mod in ('guru','pengurus'):
