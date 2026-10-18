@@ -1,4 +1,4 @@
-# SIM MA'HAD ALI LUQMANUL HAKIM
+# SIM MA'HAD ALY LUQMANUL HAKIM
 
 PHP 8.2+ / MySQL atau MariaDB, untuk IDwebhost/cPanel.
 Domain: https://mahad.aly.yayasanluqmanulhakimmarelan.com/
