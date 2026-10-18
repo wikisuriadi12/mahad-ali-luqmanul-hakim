@@ -32,6 +32,31 @@ function master_config(string $module): array {
 }
 function require_role(string $module): void { if (!can_write($module)) { http_response_code(403); exit('Akses ditolak.'); } }
 function redirect(string $page): never { header('Location: ?page='.rawurlencode($page)); exit; }
+function rupiah_bulat($v): string { return 'Rp '.number_format((float)$v,0,',','.'); }
+function rupiah_ringkas($v,bool $pendek=false): string {
+ $n=abs((float)$v);$tanda=(float)$v<0?'-':'';
+ $angka=function(float $x): string { return rtrim(rtrim(number_format($x,2,',','.'),'0'),','); };
+ if ($n>=1000000000) return $tanda.'Rp '.$angka($n/1000000000).($pendek?' M':' miliar');
+ if ($n>=1000000) return $tanda.'Rp '.$angka($n/1000000).($pendek?' jt':' juta');
+ return $tanda.rupiah_bulat($n);
+}
+function icon(string $name): string {
+ static $paths=[
+  'home'=>'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+  'peserta'=>'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.4 4.5 5.3"/>',
+  'guru'=>'<path d="M3 5.5 12 3l9 2.5-9 2.5z"/><path d="M7 9.2v4.3c0 1.5 2.2 2.7 5 2.7s5-1.2 5-2.7V9.2"/><path d="M21 6v6"/>',
+  'pengurus'=>'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M3 13h18"/>',
+  'aset'=>'<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  'keuangan'=>'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2"/>',
+  'laporan'=>'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',
+  'pengguna'=>'<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.6-3.6 3.4-5.5 7-5.5s6.4 1.9 7 5.5"/>',
+  'akun'=>'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/>',
+  'plus'=>'<path d="M12 5v14M5 12h14"/>',
+  'minus'=>'<path d="M5 12h14"/>',
+  'menu'=>'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ ];
+ return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($paths[$name]??'').'</svg>';
+}
 function rupiah($v): string { return 'Rp '.number_format((float)$v,2,',','.'); }
 function field(string $key,int $max,bool $required=true): string {
  $value=input($key);
