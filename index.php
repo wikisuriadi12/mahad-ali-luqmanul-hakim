@@ -10,7 +10,7 @@ header('Cache-Control: no-store');
 require __DIR__.'/src/bootstrap.php';
 $page = query('page', 'dashboard');
 if (!isset($_SESSION['user_id'])) { require __DIR__.'/views/login.php'; exit; }
-$allowed = ['dashboard','peserta','aset','keuangan','laporan','akun','pengguna'];
+$allowed = ['dashboard','peserta','guru','pengurus','aset','keuangan','laporan','akun','pengguna'];
 if (!in_array($page,$allowed,true)) $page='dashboard';
 if (!can_view($page)) { http_response_code(403); $page='forbidden'; }
 if (query('export') === 'csv' && $page === 'laporan') {

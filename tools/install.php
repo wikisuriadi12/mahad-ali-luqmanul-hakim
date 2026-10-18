@@ -11,7 +11,7 @@ try {
  if(prompt('Ketik PASANG untuk melanjutkan: ')!=='PASANG') exit("Dibatalkan.\n");
  $schema=file_get_contents(dirname(__DIR__).'/database/schema.sql');
  foreach(explode(';',$schema) as $statement) if(trim($statement)!=='') db()->exec($statement);
- echo "Lima tabel sistem siap.\n";
+ echo "Tujuh tabel sistem siap.\n";
  if((int)sql('SELECT COUNT(*) FROM users')->fetchColumn()>0) exit("Pengguna sudah ada. Tidak membuat atau mengganti akun.\n");
  $username=prompt('Username admin pertama: ');
  if(!preg_match('/^[A-Za-z0-9_.-]{3,80}$/D',$username)) throw new RuntimeException('Username tidak valid.');

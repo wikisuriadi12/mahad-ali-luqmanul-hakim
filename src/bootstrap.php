@@ -23,8 +23,12 @@ function can_view(string $page): bool {
  $role=$_SESSION['role']??'';
  if (in_array($page,['dashboard','akun'],true)) return $role!=='';
  if ($page==='pengguna') return $role==='admin';
- $module=['peserta'=>'peserta','aset'=>'aset','keuangan'=>'bendahara','laporan'=>'bendahara'][$page]??'';
+ $module=['peserta'=>'peserta','guru'=>'guru','pengurus'=>'pengurus','aset'=>'aset','keuangan'=>'bendahara','laporan'=>'bendahara'][$page]??'';
  return $module!=='' && in_array($role,['admin','pimpinan',$module],true);
+}
+function master_config(string $module): array {
+ return ['guru'=>['table'=>'teachers','title'=>'Guru','fields'=>['kode'=>['Kode Guru',50],'nama'=>['Nama',180],'bidang_ajar'=>['Bidang Ajar',120],'no_hp'=>['No. HP',30]],'statuses'=>['aktif','nonaktif','cuti']],
+  'pengurus'=>['table'=>'staff_members','title'=>'Pengurus','fields'=>['kode'=>['Kode Pengurus',50],'nama'=>['Nama',180],'jabatan'=>['Jabatan',120],'no_hp'=>['No. HP',30]],'statuses'=>['aktif','nonaktif']]][$module];
 }
 function require_role(string $module): void { if (!can_write($module)) { http_response_code(403); exit('Akses ditolak.'); } }
 function redirect(string $page): never { header('Location: ?page='.rawurlencode($page)); exit; }
@@ -88,6 +92,13 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    $values=[field('nomor_induk',50),field('nama',180),field('angkatan',30,false),field('nama_wali',180,false),$status];
    if (input('id')!=='') { $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if (!$id || !sql('SELECT id FROM participants WHERE id=?',[$id])->fetch()) throw new RuntimeException('Peserta tidak ditemukan.');$values[]=$id;sql('UPDATE participants SET nomor_induk=?,nama=?,angkatan=?,nama_wali=?,status=? WHERE id=?',$values); }
    else sql('INSERT INTO participants (nomor_induk,nama,angkatan,nama_wali,status) VALUES (?,?,?,?,?)',$values);
+  } elseif (in_array($action,['save_guru','save_pengurus'],true)) {
+   $module=substr($action,5);require_role($module);$target=$module;$cfg=master_config($module);
+   $status=input('status');if (!in_array($status,$cfg['statuses'],true)) throw new RuntimeException('Status tidak valid.');
+   $values=[];foreach ($cfg['fields'] as $col=>[$label,$max]) $values[]=field($col,$max,in_array($col,['kode','nama'],true));
+   $values[]=$status;$cols=array_keys($cfg['fields']);$cols[]='status';
+   if (input('id')!=='') { $id=filter_var(input('id'),FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);if (!$id || !sql('SELECT id FROM '.$cfg['table'].' WHERE id=?',[$id])->fetch()) throw new RuntimeException('Data tidak ditemukan.');$values[]=$id;sql('UPDATE '.$cfg['table'].' SET '.implode('=?,',$cols).'=? WHERE id=?',$values); }
+   else sql('INSERT INTO '.$cfg['table'].' ('.implode(',',$cols).') VALUES ('.implode(',',array_fill(0,count($cols),'?')).')',$values);
   } elseif ($action==='save_aset') {
    require_role('aset');$target='aset';$condition=input('kondisi');
    if (!in_array($condition,['baik','rusak_ringan','rusak_berat'],true)) throw new RuntimeException('Kondisi tidak valid.');
