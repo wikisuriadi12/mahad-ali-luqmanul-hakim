@@ -94,6 +94,14 @@ _,s=request(admin,'keuangan')
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'donasi','metode':'cash','nominal':'0.03'})
 assert 'Berhasil disimpan' in s and re.search(r'<td>donasi</td>\s*<td>Cash</td>\s*<td>-</td>\s*<td>Rp 0,03</td>',s),s[:200]
 _,s=request(admin,'keuangan')
+assert 'data-rupiah' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'donasi','metode':'cash','nominal':'1.500.000,50'})
+assert 'Rp 1.500.000,50' in s,s[:200]
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'donasi','metode':'cash','nominal':'Rp 2.500'})
+assert 'Rp 2.500,00' in s
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'donasi','metode':'cash','nominal':'12abc'})
+assert 'Nominal harus berupa angka rupiah yang valid' in s
+_,s=request(admin,'keuangan')
 mid=re.search(r'<td>(\d+)</td>\s*<td>2027-06-01</td><td>masuk</td><td>lainnya: ',s).group(1)
 assert 'tr class="baru"' not in s and 'value="hapus_keuangan"' in s
 _,s=request(admin,'page=keuangan&edit='+mid)
