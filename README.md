@@ -89,3 +89,13 @@ Tanpa perintah ini sistem tetap berjalan, tetapi memilih kategori "lainnya" deng
 
 ## Edit dan hapus transaksi
 Bendahara/admin dapat mengubah atau menghapus transaksi langsung dari tabel Keuangan. Setiap perubahan dan penghapusan dicatat di tabel `transaction_log` (siapa, kapan, isi sebelum dan sesudah); tabel ini dibuat otomatis saat pertama kali dipakai. Transaksi yang terkait koreksi lama tidak dapat dihapus.
+
+
+## Pembaruan database: metode pembayaran (cash/transfer)
+Jalankan sekali di phpMyAdmin pada database sistem:
+
+```sql
+ALTER TABLE transactions ADD COLUMN metode ENUM('cash','transfer') NOT NULL DEFAULT 'cash' AFTER kategori;
+```
+
+Transaksi lama otomatis tercatat sebagai cash. Tanpa perintah ini sistem tetap berjalan (semua dianggap cash), tetapi memilih transfer akan ditolak dengan pesan yang jelas.

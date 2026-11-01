@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS transactions (
  kategori ENUM('infaq','usaha','iuran','donasi','lainnya','operasional','listrik_air','konsumsi','pendidikan','pemeliharaan') NOT NULL,
  uraian VARCHAR(255) NOT NULL,
  kategori_lain VARCHAR(100) NULL,
+ metode ENUM('cash','transfer') NOT NULL DEFAULT 'cash',
  nominal DECIMAL(18,2) NOT NULL,
  created_by BIGINT UNSIGNED NOT NULL,
  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
