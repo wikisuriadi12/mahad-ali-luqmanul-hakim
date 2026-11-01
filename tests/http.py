@@ -89,7 +89,7 @@ assert 'Metode pembayaran tidak valid' in s and 'Metode salah</td>' not in s
 _,s=request(admin,'page=laporan&dari=2027-06-01&sampai=2027-06-30')
 assert 'Rincian per metode pembayaran' in s and '<td>Transfer</td>' in s and '<td>Cash</td>' in s
 _,s=request(admin,'page=laporan&dari=2027-06-01&sampai=2027-06-30&export=csv')
-assert 'Tanggal,Jenis,Kategori,Metode,Uraian,Nominal' in s and ',Transfer,Via bank,' in s,s[:300]
+assert 'Tanggal,Jenis,Kategori,Metode,Uraian,Nominal' in s and ',Transfer,"Via bank",' in s,s[:300]
 _,s=request(admin,'keuangan')
 mid=re.search(r'<td>(\d+)</td>\s*<td>2027-06-01</td><td>masuk</td><td>lainnya: ',s).group(1)
 assert 'tr class="baru"' not in s and 'value="hapus_keuangan"' in s
