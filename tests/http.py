@@ -82,6 +82,15 @@ assert 'Diabaikan' not in s
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'lainnya','kategori_lain':'x'*101,'nominal':'0.01','uraian':'Terlalu panjang'})
 assert 'Terlalu panjang</td>' not in s
 _,s=request(admin,'keuangan')
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'infaq','metode':'transfer','nominal':'0.02','uraian':'Via bank'})
+assert re.search(r'<td>Transfer</td>\s*<td>Via bank</td>',s),s[:200]
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'infaq','metode':'bitcoin','nominal':'0.02','uraian':'Metode salah'})
+assert 'Metode pembayaran tidak valid' in s and 'Metode salah</td>' not in s
+_,s=request(admin,'page=laporan&dari=2027-06-01&sampai=2027-06-30')
+assert 'Rincian per metode pembayaran' in s and '<td>Transfer</td>' in s and '<td>Cash</td>' in s
+_,s=request(admin,'page=laporan&dari=2027-06-01&sampai=2027-06-30&export=csv')
+assert 'Tanggal,Jenis,Kategori,Metode,Uraian,Nominal' in s and ',Transfer,Via bank,' in s,s[:300]
+_,s=request(admin,'keuangan')
 mid=re.search(r'<td>(\d+)</td>\s*<td>2027-06-01</td><td>masuk</td><td>lainnya: ',s).group(1)
 assert 'tr class="baru"' not in s and 'value="hapus_keuangan"' in s
 _,s=request(admin,'page=keuangan&edit='+mid)
@@ -98,6 +107,7 @@ assert 'tidak dapat dihapus' in s
 _,s=request(pimp,'keuangan');assert 'hapus_keuangan' not in s and 'edit_keuangan' not in s
 assert request(pimp,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})[0]==403
 assert request(pimp,'keuangan',{'csrf':token(s),'action':'edit_keuangan','id':mid})[0]==403
+_,s=request(admin,'keuangan')
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})
 assert 'Transaksi dihapus' in s and 'Sudah diubah' not in s
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})

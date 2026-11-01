@@ -49,7 +49,7 @@ th{background:#eef4f6;color:var(--navy);font-size:.85rem;position:sticky;top:0}t
 .aksi{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.aksi form{margin:0}
 .mini{min-height:34px;padding:6px 14px;margin:0;font-size:.85rem;width:auto}.danger{background:#9e4040}.danger:hover{background:#873434}
 .btnlink{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:10px;background:#e8f0f4;color:var(--navy);font-weight:600;font-size:.85rem;text-decoration:none}.btnlink:hover{background:#d6e4eb}
-td input,td select{margin-top:0;min-width:120px}td select{min-width:150px}td select+input{margin-top:6px}
+td input,td select{margin-top:0;min-width:90px}td select{min-width:115px}td input[name=uraian]{min-width:140px}td input[type=date]{min-width:135px}td select+input{margin-top:6px}
 tr.baru{animation:sorot 3s ease-out}@keyframes sorot{0%,60%{background:#fff0c2}100%{background:transparent}}
 /* Dashboard */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.top h1{margin:0}.top .date{color:var(--muted);font-size:.92rem}
