@@ -40,7 +40,7 @@ _,s=request(admin,'page=laporan&dari=2026-01-01&sampai=2026-01-31')
 assert '80,15' in s and '2 transaksi' in s
 status,s=request(admin,'page=laporan&dari=2026-01-01&sampai=2026-01-31&export=csv')
 rows=list(csv.reader(io.StringIO(s)))
-assert status==200 and len(rows)==3 and rows[1][3]=="'=test"
+assert status==200 and len(rows)==3 and rows[1][4]=="'=test" and rows[0][3]=='Metode'
 _,s=request(admin,'keuangan')
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'koreksi_keuangan','id':'1','alasan':'Salah nominal','tanggal_koreksi':'2026-03-01','ganti':'1','tanggal':'2026-01-01','jenis':'masuk','kategori':'donasi','nominal':'150.00','uraian':'Donasi benar'})
 assert 'Berhasil disimpan' in s and 'Dikoreksi' in s and 'Salah nominal' in s and 'KOREKSI #1' in s
