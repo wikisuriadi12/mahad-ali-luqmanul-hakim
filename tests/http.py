@@ -91,6 +91,9 @@ assert 'Rincian per metode pembayaran' in s and '<td>Transfer</td>' in s and '<t
 _,s=request(admin,'page=laporan&dari=2027-06-01&sampai=2027-06-30&export=csv')
 assert 'Tanggal,Jenis,Kategori,Metode,Uraian,Nominal' in s and ',Transfer,"Via bank",' in s,s[:300]
 _,s=request(admin,'keuangan')
+_,s=request(admin,'keuangan',{'csrf':token(s),'action':'add_keuangan','tanggal':'2027-06-01','jenis':'masuk','kategori':'donasi','metode':'cash','nominal':'0.03'})
+assert 'Berhasil disimpan' in s and re.search(r'<td>donasi</td>\s*<td>Cash</td>\s*<td>-</td>\s*<td>Rp 0,03</td>',s),s[:200]
+_,s=request(admin,'keuangan')
 mid=re.search(r'<td>(\d+)</td>\s*<td>2027-06-01</td><td>masuk</td><td>lainnya: ',s).group(1)
 assert 'tr class="baru"' not in s and 'value="hapus_keuangan"' in s
 _,s=request(admin,'page=keuangan&edit='+mid)

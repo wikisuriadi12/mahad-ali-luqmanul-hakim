@@ -170,7 +170,7 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    require_role('bendahara');$target='keuangan';$jenis=input('jenis');$kategori=input('kategori');$date=input('tanggal');
    if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
    $metode=metode_input();
-   insert_transaksi([$date,$jenis,$kategori,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']],$kategori==='lainnya'?field('kategori_lain',100,false):'',$metode);
+   insert_transaksi([$date,$jenis,$kategori,field('uraian',255,false),money(input('nominal'),true),$_SESSION['user_id']],$kategori==='lainnya'?field('kategori_lain',100,false):'',$metode);
    $_SESSION['transaksi_baru']=(int)db()->lastInsertId();
   } elseif (in_array($action,['edit_keuangan','hapus_keuangan'],true)) {
    require_role('bendahara');$target='keuangan';
@@ -182,7 +182,7 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
     if (!in_array($jenis,['masuk','keluar'],true)||!in_array($kategori,categories($jenis),true)||!valid_date($date)) throw new RuntimeException('Tanggal, jenis, atau kategori tidak valid.');
     $lain=$kategori==='lainnya'?field('kategori_lain',100,false):'';$metode=metode_input();
     if ($lain!==''&&!kategori_lain_ada()) throw new RuntimeException('Kolom kategori_lain belum ada di database. Jalankan perintah ALTER TABLE dari README terlebih dahulu.');
-    $baru=['tanggal'=>$date,'jenis'=>$jenis,'kategori'=>$kategori,'kategori_lain'=>$lain,'metode'=>$metode,'uraian'=>field('uraian',255),'nominal'=>money(input('nominal'),true)];
+    $baru=['tanggal'=>$date,'jenis'=>$jenis,'kategori'=>$kategori,'kategori_lain'=>$lain,'metode'=>$metode,'uraian'=>field('uraian',255,false),'nominal'=>money(input('nominal'),true)];
    }
    siapkan_log_transaksi();
    $pdo=db();$pdo->beginTransaction();
@@ -211,7 +211,7 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    if ($replace) {
     $kind=input('jenis');$cat=input('kategori');$ndate=input('tanggal');
     if (!in_array($kind,['masuk','keluar'],true)||!in_array($cat,categories($kind),true)||!valid_date($ndate)) throw new RuntimeException('Data transaksi pengganti tidak valid (tanggal, jenis, atau kategori).');
-    $new=[$ndate,$kind,$cat,field('uraian',255),money(input('nominal'),true),$_SESSION['user_id']];$newLain=$cat==='lainnya'?field('kategori_lain',100,false):'';$newMetode=metode_input();
+    $new=[$ndate,$kind,$cat,field('uraian',255,false),money(input('nominal'),true),$_SESSION['user_id']];$newLain=$cat==='lainnya'?field('kategori_lain',100,false):'';$newMetode=metode_input();
    }
    $pdo=db();$pdo->beginTransaction();
    try {

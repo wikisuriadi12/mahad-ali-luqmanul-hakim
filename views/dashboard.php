@@ -104,7 +104,7 @@ $k1=$bagi(count($baris1));$k2=$bagi(count($baris2));
 <?php $i=0; if($keu): ?>
 <section class="card trx <?=$k2[$i++]?>"><h2>Transaksi terbaru</h2><p class="sub">Lima catatan terakhir</p>
  <?php if($terbaru): ?><ul class="list"><?php foreach($terbaru as $x): $masuk=$x['jenis']==='masuk'; $tt=strtotime($x['tanggal']); ?>
-  <li><span class="ti <?=$masuk?'in':'out'?>"><?=icon($masuk?'plus':'minus')?></span><div class="t"><b><?=esc($x['uraian'])?></b><small><?=esc(ucfirst(str_replace('_',' ',label_kategori($x))).', '.date('j',$tt).' '.$bulan[(int)date('n',$tt)].', '.label_metode($x['metode']??'cash'))?></small></div><span class="amt <?=$masuk?'in':'out'?>"><?=$masuk?'+':'-'?> <?=esc(rupiah_bulat($x['nominal']))?></span></li>
+  <li><span class="ti <?=$masuk?'in':'out'?>"><?=icon($masuk?'plus':'minus')?></span><div class="t"><b><?=esc($x['uraian']!==''?$x['uraian']:ucfirst(str_replace('_',' ',label_kategori($x))))?></b><small><?=esc(ucfirst(str_replace('_',' ',label_kategori($x))).', '.date('j',$tt).' '.$bulan[(int)date('n',$tt)].', '.label_metode($x['metode']??'cash'))?></small></div><span class="amt <?=$masuk?'in':'out'?>"><?=$masuk?'+':'-'?> <?=esc(rupiah_bulat($x['nominal']))?></span></li>
  <?php endforeach; ?></ul><?php else: ?><p class="muted">Belum ada transaksi. Catat transaksi pertama di menu Keuangan.</p><?php endif; ?>
  <?php if(can_view('laporan')): ?><a class="more" href="?page=laporan">Lihat semua transaksi</a><?php endif; ?>
 </section>
