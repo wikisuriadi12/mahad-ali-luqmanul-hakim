@@ -24,6 +24,9 @@ if($keu){
  $awal=array_key_first($months).'-01';
  $q=sql("SELECT DATE_FORMAT(tanggal,'%Y-%m') ym, COALESCE(SUM(CASE WHEN jenis='masuk' THEN nominal ELSE 0 END),0) m, COALESCE(SUM(CASE WHEN jenis='keluar' THEN nominal ELSE 0 END),0) k FROM transactions WHERE tanggal >= ? GROUP BY ym",[$awal]);
  foreach($q as $r) if(isset($months[$r['ym']])){$months[$r['ym']]['masuk']=(float)$r['m'];$months[$r['ym']]['keluar']=(float)$r['k'];}
+ $perMetode=['cash'=>['masuk'=>0.0,'keluar'=>0.0],'transfer'=>['masuk'=>0.0,'keluar'=>0.0]];
+ $mk=metode_ada()?'metode':"'cash'";
+ foreach(sql("SELECT $mk m, COALESCE(SUM(CASE WHEN jenis='masuk' THEN nominal ELSE 0 END),0) a, COALESCE(SUM(CASE WHEN jenis='keluar' THEN nominal ELSE 0 END),0) b FROM transactions GROUP BY m") as $r) if(isset($perMetode[$r['m']])){$perMetode[$r['m']]['masuk']=(float)$r['a'];$perMetode[$r['m']]['keluar']=(float)$r['b'];}
  $max=max(1.0,...array_map(fn($m)=>max($m['masuk'],$m['keluar']),array_values($months)));
  // Saldo berjalan per bulan untuk grafik garis kecil.
  $sebelum=(float)sql("SELECT COALESCE(SUM(CASE WHEN jenis='masuk' THEN nominal ELSE -nominal END),0) FROM transactions WHERE tanggal < ?",[$awal])->fetchColumn();
@@ -84,6 +87,12 @@ $k1=$bagi(count($baris1));$k2=$bagi(count($baris2));
 <?php endif; ?>
 <?php if($kartu): ?><div class="statrow"><?php foreach($kartu as [$tone,$ic,$label,$jumlah,$sub,$pct,$warna,$link,$linkLabel]): ?>
  <section class="card stat"><span class="ar <?=esc($tone)?>"><?=icon($ic)?></span><span class="k"><?=esc($label)?></span><span class="v"><?=(int)$jumlah?></span><span class="d"><?=esc($sub)?></span><div class="bar"><i style="width:<?=$pct?>%<?=$warna==='gold'?';background:var(--gold)':''?>"></i></div><a href="<?=esc($link)?>"><?=esc($linkLabel)?></a></section>
+<?php endforeach; ?></div><?php endif; ?>
+
+<?php if($keu): ?><div class="metoderow"><?php foreach($perMetode as $m=>$x): $sl=$x['masuk']-$x['keluar']; ?>
+ <section class="card metode"><div class="lbl"><span class="chip <?=$m==='cash'?'t2':'t1'?>"><?=icon($m==='cash'?'keuangan':'transfer')?></span><?=esc(label_metode($m))?></div>
+ <div class="big<?=$sl<0?' neg':''?>"><?=esc(rupiah_bulat($sl))?></div><p class="note"><?=$m==='cash'?'Saldo uang tunai':'Saldo rekening bank'?></p>
+ <div class="io"><div><small>Pemasukan</small><b class="in"><?=esc(rupiah_ringkas($x['masuk'],true))?></b></div><div><small>Pengeluaran</small><b class="out"><?=esc(rupiah_ringkas($x['keluar'],true))?></b></div></div></section>
 <?php endforeach; ?></div><?php endif; ?>
 
 <?php $i=0; if($keu): ?>
