@@ -124,7 +124,7 @@ assert 'Transaksi dihapus' in s and 'Sudah diubah' not in s
 _,s=request(admin,'keuangan',{'csrf':token(s),'action':'hapus_keuangan','id':mid})
 assert 'Transaksi tidak ditemukan' in s
 _,s=request(admin,'dashboard')
-assert 'Kelola guru' in s and 'Kelola pengurus' in s
+assert 'Kelola guru' in s and 'Kelola pengurus' in s and 'Saldo rekening bank' in s and 'Saldo uang tunai' in s
 for mod in ('guru','pengurus'):
  _,s=request(pimp,mod);assert request(pimp,mod)[0]==200 and 'Simpan' not in s
  assert request(pimp,mod,{'csrf':token(s),'action':'save_'+mod})[0]==403
@@ -132,7 +132,7 @@ for mod in ('guru','pengurus'):
 for role,allowed,forbidden in [('peserta','peserta','keuangan'),('aset','aset','peserta'),('bendahara','keuangan','aset'),('pimpinan','laporan','pengguna')]:
  c=login(role);assert request(c,allowed)[0]==200;assert request(c,forbidden)[0]==403
  _,s=request(c,'dashboard')
- if role in ['peserta','aset']:assert 'Saldo tercatat' not in s
+ if role in ['peserta','aset']:assert 'Saldo tercatat' not in s and 'Saldo uang tunai' not in s
  if role=='pimpinan':assert request(c,'peserta',{'csrf':token(s),'action':'save_peserta'})[0]==403
 other_admin=login('admin')
 _,s=request(admin,'akun')

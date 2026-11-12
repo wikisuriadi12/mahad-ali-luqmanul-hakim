@@ -51,6 +51,7 @@ function icon(string $name): string {
   'laporan'=>'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/>',
   'pengguna'=>'<circle cx="12" cy="8" r="3.4"/><path d="M5 20c.6-3.6 3.4-5.5 7-5.5s6.4 1.9 7 5.5"/>',
   'akun'=>'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/>',
+  'transfer'=>'<path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/>',
   'plus'=>'<path d="M12 5v14M5 12h14"/>',
   'minus'=>'<path d="M5 12h14"/>',
   'menu'=>'<path d="M4 7h16M4 12h16M4 17h16"/>',

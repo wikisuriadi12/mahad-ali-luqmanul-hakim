@@ -78,6 +78,12 @@ tr.baru{animation:sorot 3s ease-out}@keyframes sorot{0%,60%{background:#fff0c2}1
 .stat .d{color:var(--muted);font-size:.85rem;margin-top:2px}
 .bar{height:7px;border-radius:99px;background:#e6edf0;margin:12px 0 4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ok);border-radius:99px}
 .stat a{margin-top:8px;font-weight:650;color:var(--navy);font-size:.9rem;text-decoration:none}.stat a:hover{text-decoration:underline}
+.metoderow{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:18px}.metoderow>*{min-width:0}
+.metode .lbl{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:650}
+.chip{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}.chip svg{width:18px;height:18px}
+.metode .big{font-family:var(--serif);font-size:1.8rem;font-weight:700;color:var(--navy);margin:8px 0 0;line-height:1.1;overflow-wrap:anywhere}.metode .big.neg{color:var(--out)}
+.metode .io div{background:#f2f6f7}
+.metode .note{font-size:.82rem;color:var(--muted);margin:2px 0 14px}
 .c7{grid-column:span 7}.c5{grid-column:span 5}.c12{grid-column:1/-1}
 .card .sub{color:var(--muted);font-size:.87rem;margin:0 0 14px}.card h2{margin-bottom:2px}
 .legend{display:flex;gap:16px;color:var(--muted);font-size:.84rem;margin:0 0 6px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
@@ -118,7 +124,7 @@ tr.baru{animation:sorot 3s ease-out}@keyframes sorot{0%,60%{background:#fff0c2}1
  h1{font-size:1.35rem}.card{padding:16px;border-radius:16px}
  .hero{padding:20px 20px 18px;min-height:0}.hero h2{font-size:1.5rem}.hero .arch{width:150px;right:-10px;opacity:.5}.acts .btn{height:40px;padding:0 13px;font-size:.88rem}
  .saldo{display:flex;flex-direction:column;align-items:stretch}.saldo .big{font-size:1.8rem}.saldo .spark{order:0;margin:2px 0 12px;flex:none}.saldo .io{min-width:0;margin-top:0}.saldo .note{flex-basis:auto;margin:0 0 12px}
- .statrow{grid-template-columns:repeat(2,1fr);gap:14px}.stat{padding:14px}.stat .ar{width:40px;height:44px;margin-bottom:8px}.stat .v{font-size:1.8rem}
+ .statrow{grid-template-columns:repeat(2,1fr);gap:14px}.metoderow{grid-template-columns:1fr;gap:14px}.metode .big{font-size:1.35rem}.metode .lbl{font-size:.9rem}.stat{padding:14px}.stat .ar{width:40px;height:44px;margin-bottom:8px}.stat .v{font-size:1.8rem}
  .chart{height:170px;gap:8px}.months{gap:8px}.donut{width:128px;height:128px}.donutrow{gap:16px}
  .grid{grid-template-columns:repeat(2,1fr);gap:12px}.grid>*{min-width:0}.number{font-size:1.4rem;overflow-wrap:anywhere}
  .formgrid{grid-template-columns:1fr}.search{flex-wrap:wrap}.search button{width:100%}
