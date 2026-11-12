@@ -146,3 +146,5 @@ tr.baru{animation:sorot 3s ease-out}@keyframes sorot{0%,60%{background:#fff0c2}1
 }
 @media(max-width:330px){.grid,.statrow{grid-template-columns:1fr}}
 @media print{.side,.side-backdrop,.mtop,.bnav,footer,form,.pager,.hero,.top,.acts{display:none}.app{display:block}body{background:white;color:black}.main{max-width:none;margin:0;padding:0}.card{border:1px solid #ddd;break-inside:avoid}.tablewrap{overflow:visible;border:0}table{min-width:0;font-size:10pt}.grid{grid-template-columns:repeat(2,1fr)}a{display:none}}
+
+.ganti summary{cursor:pointer;list-style:none;display:inline-block}.ganti summary::-webkit-details-marker{display:none}.ganti form{display:grid;gap:8px;margin-top:10px;min-width:230px}.ganti label{margin:0}

@@ -139,4 +139,17 @@ _,s=request(admin,'akun')
 _,s=request(admin,'akun',{'csrf':token(s),'action':'change_password','password_lama':'Testing-Password-123','password_baru':'Changed-Password-123','konfirmasi':'Changed-Password-123'})
 assert 'Berhasil disimpan' in s
 assert 'Masuk ke Sistem' in request(other_admin,'dashboard')[1]
+_,s=request(admin,'pengguna');uid=re.search(r'<td>bendahara</td>.*?name="id" value="(\d+)"',s,re.S).group(1)
+bend=login('bendahara')
+assert request(bend,'pengguna')[0]==403
+_,s2=request(bend,'akun')
+assert request(bend,'pengguna',{'csrf':token(s2),'action':'reset_password','id':uid,'password_baru':'Reset-Password-1234','konfirmasi':'Reset-Password-1234'})[0]==403
+_,s=request(admin,'pengguna')
+_,r=request(admin,'pengguna',{'csrf':token(s),'action':'reset_password','id':uid,'password_baru':'pendek','konfirmasi':'pendek'});assert '12–72 karakter' in r
+_,r=request(admin,'pengguna',{'csrf':token(s),'action':'reset_password','id':uid,'password_baru':'Reset-Password-1234','konfirmasi':'Beda-Password-1234'});assert '12–72 karakter' in r
+_,r=request(admin,'pengguna',{'csrf':token(s),'action':'reset_password','id':'99999','password_baru':'Reset-Password-1234','konfirmasi':'Reset-Password-1234'});assert 'tidak ditemukan' in r
+_,r=request(admin,'pengguna',{'csrf':token(s),'action':'reset_password','id':uid,'password_baru':'Reset-Password-1234','konfirmasi':'Reset-Password-1234'});assert 'berhasil diganti' in r
+assert 'Masuk ke Sistem' in request(bend,'dashboard')[1]
+c=client();_,s=request(c);st,r=request(c,data={'csrf':token(s),'action':'login','username':'bendahara','password':'Testing-Password-123'});assert 'Keluar' not in r
+c=client();_,s=request(c);st,r=request(c,data={'csrf':token(s),'action':'login','username':'bendahara','password':'Reset-Password-1234'});assert 'Keluar' in r
 print('PASS: data guru dan pengurus, koreksi transaksi (pembalik, pengganti, tolak ganda), login, CSRF, XSS escaping, participant edits, asset creation, money, dates, reports, CSV, roles, password/session revocation')

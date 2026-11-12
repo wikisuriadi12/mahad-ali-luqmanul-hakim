@@ -245,6 +245,14 @@ if (($_SERVER['REQUEST_METHOD']??'')==='POST') {
    require_role('admin');$target='pengguna';$username=field('username',80);$role=input('role');$password=$_POST['password']??'';
    if (!preg_match('/^[A-Za-z0-9_.-]{3,80}$/D',$username)||!in_array($role,['admin','peserta','aset','bendahara','pimpinan'],true)||!is_string($password)||strlen($password)<12||strlen($password)>72) throw new RuntimeException('Username, peran, atau password tidak valid (password minimal 12 karakter).');
    sql('INSERT INTO users (username,password_hash,role) VALUES (?,?,?)',[$username,password_hash($password,PASSWORD_DEFAULT),$role]);
+  } elseif ($action==='reset_password') {
+   require_role('admin');$target='pengguna';$id=(int)filter_var($_POST['id']??'',FILTER_VALIDATE_INT,['options'=>['min_range'=>1,'default'=>0]]);$new=$_POST['password_baru']??'';$confirm=$_POST['konfirmasi']??'';
+   $u=$id?sql('SELECT id,username FROM users WHERE id=?',[$id])->fetch():false;
+   if (!$u) throw new RuntimeException('Pengguna tidak ditemukan.');
+   if (!is_string($new)||strlen($new)<12||strlen($new)>72||$new!==$confirm) throw new RuntimeException('Password baru harus 12–72 karakter dan konfirmasi harus sama.');
+   $hash=password_hash($new,PASSWORD_DEFAULT);sql('UPDATE users SET password_hash=? WHERE id=?',[$hash,$id]);
+   if ($id===(int)$_SESSION['user_id']) {session_regenerate_id(true);$_SESSION['auth_version']=hash('sha256',$hash);$_SESSION['csrf']=bin2hex(random_bytes(32));}
+   $pesan='Password pengguna '.$u['username'].' berhasil diganti. Pengguna tersebut harus masuk ulang.';
   } else throw new RuntimeException('Aksi tidak dikenal.');
   $_SESSION['flash']=$pesan;
  } catch (PDOException $e) {error_log($e->getMessage());$_SESSION['flash']=$e->getCode()==='23000'?'Nomor induk, kode, atau username sudah digunakan.':'Database belum siap atau penyimpanan gagal. Hubungi administrator.';}
